@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct DearlyApp: App {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if hasCompletedOnboarding {
+                HomeView()
+            } else {
+                OnboardingView(isOnboardingComplete: $hasCompletedOnboarding)
+            }
         }
     }
 }
