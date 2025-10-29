@@ -11,6 +11,13 @@ struct AnimatedCardView: View {
     let card: Card
     
     @State private var isOpen = false
+    @State private var xOffset: CGFloat = 0
+
+    private let cardWidth: CGFloat = 320
+    private let cardHeight: CGFloat = 224
+    private var pageWidth: CGFloat {
+        cardWidth / 2
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -21,12 +28,12 @@ struct AnimatedCardView: View {
                         Image(uiImage: rightImage)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 160, height: 224)
+                            .frame(width: pageWidth, height: cardHeight)
                             .clipped()
                     } else {
                         Rectangle()
                             .fill(Color.white)
-                            .frame(width: 160, height: 224)
+                            .frame(width: pageWidth, height: cardHeight)
                             .overlay(Text("Right").foregroundColor(Color.black))
                     }
                 }
@@ -34,6 +41,16 @@ struct AnimatedCardView: View {
                 .opacity(isOpen ? 1 : 0)
                 .zIndex(0)
                 
+                Rectangle()
+                                .fill(LinearGradient(
+                                    gradient: Gradient(colors: [Color.black.opacity(0.3), Color.gray.opacity(0.1)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ))
+                                .frame(width: 2, height: cardHeight)
+                                .opacity(isOpen ? 1 : 0)
+                                .zIndex(0.5)
+
                 // Double-sided page: Front cover / Inside left
                 ZStack {
                     // Front side (visible when closed)
@@ -42,12 +59,12 @@ struct AnimatedCardView: View {
                             Image(uiImage: frontImage)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 160, height: 224)
+                                .frame(width: pageWidth, height: cardHeight)
                                 .clipped()
                         } else {
                             Rectangle()
                                 .fill(Color.white)
-                                .frame(width: 160, height: 224)
+                                .frame(width: pageWidth, height: cardHeight)
                                 .overlay(Text("Tap to Open").foregroundColor(Color.black))
                         }
                     }
@@ -63,12 +80,12 @@ struct AnimatedCardView: View {
                             Image(uiImage: leftImage)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 160, height: 224)
+                                .frame(width: pageWidth, height: cardHeight)
                                 .clipped()
                         } else {
                             Rectangle()
                                 .fill(Color.white)
-                                .frame(width: 160, height: 224)
+                                .frame(width: pageWidth, height: cardHeight)
                                 .overlay(Text("Inside Left").foregroundColor(Color.black))
                         }
                     }
@@ -95,8 +112,9 @@ struct AnimatedCardView: View {
                 .zIndex(1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .offset(x: xOffset)
         }
-        .frame(width: 320, height: 224)
+        .frame(width: cardWidth, height: cardHeight)
         .onTapGesture {
             let impact = UIImpactFeedbackGenerator(style: .medium)
             impact.impactOccurred()
@@ -110,6 +128,7 @@ struct AnimatedCardView: View {
                 )
             ) {
                 isOpen.toggle()
+                xOffset = isOpen ? pageWidth / 2 : 0
             }
         }
     }
@@ -128,4 +147,3 @@ struct AnimatedCardView: View {
         .padding()
     }
 }
-

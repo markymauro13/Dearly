@@ -68,7 +68,29 @@ struct SpinningCardView: View {
                     }
             )
             .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            .onAppear {
+                withAnimation(
+                    .linear(duration: 8)
+                    .repeatForever(autoreverses: false)
+                ) {
+                    rotation = 360
+                }
+            }
         }
         .aspectRatio(1/1.4, contentMode: .fit)
+    }
+}
+
+#Preview {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        SpinningCardView(card: Card(
+            frontImageData: nil,
+            backImageData: nil,
+            insideLeftImageData: nil,
+            insideRightImageData: nil
+        ))
+        .padding()
+        .frame(height: 350)
     }
 }
