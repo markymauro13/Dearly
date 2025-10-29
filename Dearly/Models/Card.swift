@@ -11,20 +11,23 @@ import SwiftUI
 struct Card: Identifiable, Codable {
     let id: UUID
     var frontImageData: Data?
-    var insideSpreadImageData: Data?
+    var insideLeftImageData: Data?
+    var insideRightImageData: Data?
     var dateScanned: Date
     var isFavorite: Bool
     
     init(
         id: UUID = UUID(),
         frontImageData: Data? = nil,
-        insideSpreadImageData: Data? = nil,
+        insideLeftImageData: Data? = nil,
+        insideRightImageData: Data? = nil,
         dateScanned: Date = Date(),
         isFavorite: Bool = false
     ) {
         self.id = id
         self.frontImageData = frontImageData
-        self.insideSpreadImageData = insideSpreadImageData
+        self.insideLeftImageData = insideLeftImageData
+        self.insideRightImageData = insideRightImageData
         self.dateScanned = dateScanned
         self.isFavorite = isFavorite
     }
@@ -35,8 +38,13 @@ struct Card: Identifiable, Codable {
         return UIImage(data: data)
     }
     
-    var insideSpreadImage: UIImage? {
-        guard let data = insideSpreadImageData else { return nil }
+    var insideLeftImage: UIImage? {
+        guard let data = insideLeftImageData else { return nil }
+        return UIImage(data: data)
+    }
+
+    var insideRightImage: UIImage? {
+        guard let data = insideRightImageData else { return nil }
         return UIImage(data: data)
     }
 }
