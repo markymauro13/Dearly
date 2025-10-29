@@ -12,12 +12,13 @@ struct ScanCardFlowView: View {
     @ObservedObject var viewModel: CardsViewModel
     
     @State private var frontImage: UIImage?
+    @State private var backImage: UIImage?
     @State private var insideLeftImage: UIImage?
     @State private var insideRightImage: UIImage?
     @State private var showScanner = false
     
     private var isComplete: Bool {
-        frontImage != nil && insideLeftImage != nil && insideRightImage != nil
+        frontImage != nil && backImage != nil && insideLeftImage != nil && insideRightImage != nil
     }
 
     var body: some View {
@@ -28,17 +29,22 @@ struct ScanCardFlowView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                     
-                    Text("Capture all three sides of your card in a single session. Please scan in the following order: Front, Inside Left, then Inside Right.")
+                    Text("Capture all four sides of your card in a single session. Please scan in the following order: Front, Back, Inside Left, then Inside Right.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
                 
-                HStack(spacing: 12) {
-                    ImagePreview(image: $frontImage, label: "Front")
-                    ImagePreview(image: $insideLeftImage, label: "Inside Left")
-                    ImagePreview(image: $insideRightImage, label: "Inside Right")
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        ImagePreview(image: $frontImage, label: "Front")
+                        ImagePreview(image: $backImage, label: "Back")
+                    }
+                    HStack(spacing: 12) {
+                        ImagePreview(image: $insideLeftImage, label: "Inside Left")
+                        ImagePreview(image: $insideRightImage, label: "Inside Right")
+                    }
                 }
                 .padding()
                 
@@ -80,20 +86,22 @@ struct ScanCardFlowView: View {
     }
     
     private func handleScannedImages(_ images: [UIImage]) {
-        guard images.count >= 3 else {
+        guard images.count >= 4 else {
             // Handle error: not enough images scanned
-            print("Error: Expected 3 images, but received \(images.count)")
+            print("Error: Expected 4 images, but received \(images.count)")
             return
         }
 
         frontImage = images[0]
-        insideLeftImage = images[1]
-        insideRightImage = images[2]
+        backImage = images[1]
+        insideLeftImage = images[2]
+        insideRightImage = images[3]
     }
     
     private func saveCard() {
         let card = Card(
             frontImageData: frontImage?.jpegData(compressionQuality: 0.8),
+            backImageData: backImage?.jpegData(compressionQuality: 0.8),
             insideLeftImageData: insideLeftImage?.jpegData(compressionQuality: 0.8),
             insideRightImageData: insideRightImage?.jpegData(compressionQuality: 0.8)
         )

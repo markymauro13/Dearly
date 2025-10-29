@@ -11,6 +11,7 @@ import SwiftUI
 struct Card: Identifiable, Codable {
     let id: UUID
     var frontImageData: Data?
+    var backImageData: Data?
     var insideLeftImageData: Data?
     var insideRightImageData: Data?
     var dateScanned: Date
@@ -19,6 +20,7 @@ struct Card: Identifiable, Codable {
     init(
         id: UUID = UUID(),
         frontImageData: Data? = nil,
+        backImageData: Data? = nil,
         insideLeftImageData: Data? = nil,
         insideRightImageData: Data? = nil,
         dateScanned: Date = Date(),
@@ -26,6 +28,7 @@ struct Card: Identifiable, Codable {
     ) {
         self.id = id
         self.frontImageData = frontImageData
+        self.backImageData = backImageData
         self.insideLeftImageData = insideLeftImageData
         self.insideRightImageData = insideRightImageData
         self.dateScanned = dateScanned
@@ -38,11 +41,16 @@ struct Card: Identifiable, Codable {
         return UIImage(data: data)
     }
     
+    var backImage: UIImage? {
+        guard let data = backImageData else { return nil }
+        return UIImage(data: data)
+    }
+    
     var insideLeftImage: UIImage? {
         guard let data = insideLeftImageData else { return nil }
         return UIImage(data: data)
     }
-
+    
     var insideRightImage: UIImage? {
         guard let data = insideRightImageData else { return nil }
         return UIImage(data: data)

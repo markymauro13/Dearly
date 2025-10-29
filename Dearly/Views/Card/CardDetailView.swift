@@ -50,7 +50,9 @@ struct CardDetailView: View {
 #Preview {
     CardDetailView(card: Card(
         frontImageData: nil,
-        insideSpreadImageData: nil
+        backImageData: nil,
+        insideLeftImageData: nil,
+        insideRightImageData: nil
     ))
 }
 
