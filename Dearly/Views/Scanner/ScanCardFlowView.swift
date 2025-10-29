@@ -7,176 +7,128 @@
 
 import SwiftUI
 
-enum ScanStep: String, CaseIterable {
-    case front = "Front Cover"
-    case insideSpread = "Inside Spread"
-    
-    var instruction: String {
-        switch self {
-        case .front:
-            return "Scan the front cover (closed)"
-        case .insideSpread:
-            return "Open fully and scan both inside pages together as one wide image"
-        }
-    }
-    
-    var detailInstruction: String {
-        switch self {
-        case .front:
-            return "Keep the card portrait orientation"
-        case .insideSpread:
-            return "Keep the same height, but capture both pages side-by-side"
-        }
-    }
-}
-
 struct ScanCardFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: CardsViewModel
     
-    @State private var currentStep: ScanStep = .front
     @State private var frontImage: UIImage?
-    @State private var insideSpreadImage: UIImage?
+    @State private var insideLeftImage: UIImage?
+    @State private var insideRightImage: UIImage?
     @State private var showScanner = false
     
+    private var isComplete: Bool {
+        frontImage != nil && insideLeftImage != nil && insideRightImage != nil
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Title
-                Text("Scan Card")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .padding(.top, 20)
-                
-                Spacer()
-                
-                // Current step label and instruction
-                VStack(spacing: 8) {
-                    Text(currentStep.rawValue)
-                        .font(.title2)
-                        .fontWeight(.semibold)
+            VStack(spacing: 20) {
+                VStack {
+                    Text("Scan Your Card")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
                     
-                    Text(currentStep.instruction)
+                    Text("Capture all three sides of your card in a single session. Please scan in the following order: Front, Inside Left, then Inside Right.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                    
-                    Text(currentStep.detailInstruction)
-                        .font(.caption)
-                        .foregroundColor(.secondary.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .italic()
+                        .padding(.horizontal)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
                 
-                // Image preview
-                if let image = currentStepImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: 300, maxHeight: 400)
-                        .cornerRadius(12)
-                        .shadow(radius: 8)
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(maxWidth: 300, maxHeight: 400)
-                        .overlay(
-                            Text("No scan yet")
-                                .foregroundColor(.gray)
-                        )
+                HStack(spacing: 12) {
+                    ImagePreview(image: $frontImage, label: "Front")
+                    ImagePreview(image: $insideLeftImage, label: "Inside Left")
+                    ImagePreview(image: $insideRightImage, label: "Inside Right")
                 }
+                .padding()
                 
                 Spacer()
                 
-                // Camera button
                 Button(action: {
                     showScanner = true
                 }) {
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 24))
+                    Label("Scan Card", systemImage: "camera.fill")
+                        .font(.headline)
                         .foregroundColor(.white)
-                        .frame(width: 60, height: 60)
+                        .padding()
+                        .frame(maxWidth: .infinity)
                         .background(Color.blue)
-                        .clipShape(Circle())
+                        .cornerRadius(12)
                 }
-                .padding(.bottom, 40)
-                
-                Spacer()
+                .padding(.horizontal)
             }
+            .padding(.top)
+            .navigationTitle("New Card")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
-                
                 ToolbarItem(placement: .confirmationAction) {
-                    if isCurrentStepComplete {
-                        Button(isLastStep ? "Done" : "Next") {
-                            if isLastStep {
-                                saveCard()
-                            } else {
-                                moveToNextStep()
-                            }
-                        }
+                    Button("Done") {
+                        saveCard()
                     }
+                    .disabled(!isComplete)
                 }
             }
             .sheet(isPresented: $showScanner) {
                 CardScannerView { images in
-                    if let firstImage = images.first {
-                        setCurrentStepImage(firstImage)
-                    }
+                    handleScannedImages(images)
                 }
             }
         }
     }
     
-    // MARK: - Helper Properties
-    
-    private var currentStepImage: UIImage? {
-        switch currentStep {
-        case .front: return frontImage
-        case .insideSpread: return insideSpreadImage
-        }
-    }
-    
-    private var isCurrentStepComplete: Bool {
-        currentStepImage != nil
-    }
-    
-    private var isLastStep: Bool {
-        currentStep == .insideSpread
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func setCurrentStepImage(_ image: UIImage) {
-        switch currentStep {
-        case .front: frontImage = image
-        case .insideSpread: insideSpreadImage = image
-        }
-    }
-    
-    private func moveToNextStep() {
-        guard let currentIndex = ScanStep.allCases.firstIndex(of: currentStep),
-              currentIndex < ScanStep.allCases.count - 1 else {
+    private func handleScannedImages(_ images: [UIImage]) {
+        guard images.count >= 3 else {
+            // Handle error: not enough images scanned
+            print("Error: Expected 3 images, but received \(images.count)")
             return
         }
-        currentStep = ScanStep.allCases[currentIndex + 1]
+
+        frontImage = images[0]
+        insideLeftImage = images[1]
+        insideRightImage = images[2]
     }
     
     private func saveCard() {
         let card = Card(
             frontImageData: frontImage?.jpegData(compressionQuality: 0.8),
-            insideSpreadImageData: insideSpreadImage?.jpegData(compressionQuality: 0.8)
+            insideLeftImageData: insideLeftImage?.jpegData(compressionQuality: 0.8),
+            insideRightImageData: insideRightImage?.jpegData(compressionQuality: 0.8)
         )
         
         viewModel.addCard(card)
         dismiss()
+    }
+}
+
+struct ImagePreview: View {
+    @Binding var image: UIImage?
+    let label: String
+
+    var body: some View {
+        VStack {
+            if let img = image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFit()
+                    .cornerRadius(8)
+                    .shadow(radius: 4)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.1))
+                    .overlay(
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray.opacity(0.5))
+                    )
+            }
+
+            Text(label)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
     }
 }
 
