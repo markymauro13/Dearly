@@ -114,7 +114,7 @@ struct CardsGridView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.sortedCards) { card in
-                    CardThumbnailView(card: card)
+                    SpinningCardView(card: card)
                         .onTapGesture {
                             selectedCard = card
                         }
@@ -148,34 +148,6 @@ struct CardsGridView: View {
         } message: {
             Text("This card will be permanently deleted.")
         }
-    }
-}
-
-// MARK: - Card Thumbnail View
-struct CardThumbnailView: View {
-    let card: Card
-    
-    var body: some View {
-        GeometryReader { geometry in
-            if let frontImage = card.frontImage {
-                Image(uiImage: frontImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                    .clipped()
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-            } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                    .overlay(
-                        Image(systemName: "photo")
-                            .foregroundColor(.gray)
-                    )
-            }
-        }
-        .aspectRatio(1/1.4, contentMode: .fit)
     }
 }
 
