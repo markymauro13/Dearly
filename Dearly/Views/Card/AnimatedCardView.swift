@@ -11,86 +11,75 @@ struct AnimatedCardView: View {
     let card: Card
     
     @State private var isOpen = false
-    
-    var body: some View {
-        ZStack {
-            // Inside pages (static, always underneath)
-            HStack(spacing: 0) {
-                // Left inside page
-                Group {
-                    if let leftImage = card.insideLeftImage {
-                        Image(uiImage: leftImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 160, height: 224)
-                            .clipped()
-                    } else {
-                        Rectangle()
-                            .fill(Color.white)
-                            .frame(width: 160, height: 224)
-                            .overlay(Text("Left").foregroundColor(Color.black))
-                    }
-                }
-                
-                // Right inside page
-                Group {
-                    if let rightImage = card.insideRightImage {
-                        Image(uiImage: rightImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 160, height: 224)
-                            .clipped()
-                    } else {
-                        Rectangle()
-                            .fill(Color.white)
-                            .frame(width: 160, height: 224)
-                            .overlay(Text("Right").foregroundColor(Color.black))
-                    }
-                }
-            }
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            // Front cover (rotates to reveal inside)
+    private let cardWidth: CGFloat = 160
+    private let cardHeight: CGFloat = 224
+
+    // A private helper view to create each visual side of the card.
+    private struct CardFace: View {
+        let image: UIImage?
+        let text: String
+        let width: CGFloat
+        let height: CGFloat
+
+        var body: some View {
             Group {
-                if let frontImage = card.frontImage {
-                    Image(uiImage: frontImage)
+                if let image = image {
+                    Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 160, height: 224)
-                        .clipped()
                 } else {
                     Rectangle()
                         .fill(Color.white)
-                        .frame(width: 160, height: 224)
-                        .overlay(Text("Tap to Open").foregroundColor(Color.black))
+                        .overlay(Text(text).foregroundColor(.black))
                 }
             }
-            .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.5), radius: 15, x: 0, y: 8)
-            .rotation3DEffect(
-                .degrees(isOpen ? -160 : 0),
-                axis: (x: 0, y: 1, z: 0),
-                anchor: .leading,
-                perspective: 0.3
-            )
-            .opacity(isOpen ? 0 : 1)
+            .frame(width: width, height: height)
+            .clipped()
         }
+    }
+
+    var body: some View {
+        ZStack {
+            // Base Layer: The fully open card, composed of the two inside pages.
+            // This is always present but is only fully visible when the cover opens.
+            HStack(spacing: 0) {
+                CardFace(image: card.insideLeftImage, text: "Left", width: cardWidth, height: cardHeight)
+                CardFace(image: card.insideRightImage, text: "Right", width: cardWidth, height: cardHeight)
+            }
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+
+            // Top Layer: The front cover, which acts as a "door".
+            CardFace(image: card.frontImage, text: "Front", width: cardWidth, height: cardHeight)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.4), radius: 12, y: 8)
+                // This rotation swings the cover open or closed.
+                .rotation3DEffect(
+                    .degrees(isOpen ? -180 : 0),
+                    axis: (x: 0, y: 1, z: 0),
+                    anchor: .leading, // The "hinge" or "spine" of the card.
+                    perspective: 0.4
+                )
+        }
+        // This offset is the key to the centering animation.
+        // When closed, the view is shifted so the cover appears centered.
+        // When open, the offset is removed, and the full two-page spread is centered.
+        .offset(x: isOpen ? 0 : -cardWidth / 2)
         .onTapGesture {
             let impact = UIImpactFeedbackGenerator(style: .medium)
             impact.impactOccurred()
             
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
+            // Use a spring animation for a more physical feel.
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 isOpen.toggle()
             }
         }
     }
-    
 }
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        Color.gray.ignoresSafeArea()
         AnimatedCardView(card: Card(
             frontImageData: nil,
             insideLeftImageData: nil,
@@ -99,4 +88,3 @@ struct AnimatedCardView: View {
         .padding()
     }
 }
-
