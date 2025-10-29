@@ -41,15 +41,15 @@ struct AnimatedCardView: View {
                 .opacity(isOpen ? 1 : 0)
                 .zIndex(0)
                 
-                Rectangle()
-                                .fill(LinearGradient(
-                                    gradient: Gradient(colors: [Color.black.opacity(0.3), Color.gray.opacity(0.1)]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ))
-                                .frame(width: 2, height: cardHeight)
-                                .opacity(isOpen ? 1 : 0)
-                                .zIndex(0.5)
+//                Rectangle()
+//                                .fill(LinearGradient(
+//                                    gradient: Gradient(colors: [Color.black.opacity(0.3), Color.gray.opacity(0.1)]),
+//                                    startPoint: .leading,
+//                                    endPoint: .trailing
+//                                ))
+//                                .frame(width: 2, height: cardHeight)
+//                                .opacity(isOpen ? 1 : 0)
+//                                .zIndex(0.5)
 
                 // Double-sided page: Front cover / Inside left
                 ZStack {

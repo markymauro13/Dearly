@@ -11,16 +11,54 @@ struct SpinningCardView: View {
     let card: Card
 
     @State private var rotation: Double = 0
-
-    private var isFlipped: Bool {
-        let angle = rotation.truncatingRemainder(dividingBy: 360)
-        return angle < -90 || angle > 90
+    
+    private var frontOpacity: Double {
+        let normalizedRotation = rotation.truncatingRemainder(dividingBy: 360)
+        let absRotation = abs(normalizedRotation)
+        if absRotation > 90 && absRotation < 270 {
+            return 0
+        }
+        return 1
+    }
+    
+    private var backOpacity: Double {
+        let normalizedRotation = rotation.truncatingRemainder(dividingBy: 360)
+        let absRotation = abs(normalizedRotation)
+        if absRotation > 90 && absRotation < 270 {
+            return 1
+        }
+        return 0
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Front of the card
+                // Back of the card (4th scan)
+                Group {
+                    if let backImage = card.backImage {
+                        Image(uiImage: backImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .clipped()
+                            .cornerRadius(12)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .overlay(
+                                Image(systemName: "questionmark")
+                                    .foregroundColor(.white)
+                            )
+                    }
+                }
+                .rotation3DEffect(
+                    .degrees(180),
+                    axis: (x: 0.0, y: 1.0, z: 0.0)
+                )
+                .opacity(backOpacity)
+
+                // Front of the card (1st scan)
                 Group {
                     if let frontImage = card.frontImage {
                         Image(uiImage: frontImage)
@@ -39,23 +77,7 @@ struct SpinningCardView: View {
                             )
                     }
                 }
-                .opacity(isFlipped ? 0 : 1)
-
-                // Back of the card (placeholder)
-                Group {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.4))
-                        .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                        .overlay(
-                            Image(systemName: "questionmark")
-                                .foregroundColor(.white)
-                        )
-                        .rotation3DEffect(
-                            .degrees(180),
-                            axis: (x: 0.0, y: 1.0, z: 0.0)
-                        )
-                }
-                .opacity(isFlipped ? 1 : 0)
+                .opacity(frontOpacity)
             }
             .rotation3DEffect(
                 .degrees(rotation),
