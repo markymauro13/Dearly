@@ -15,35 +15,48 @@ struct SpinningCardView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Back of the card (placeholder)
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.4))
-                    .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                    .overlay(
-                        Image(systemName: "questionmark")
-                            .foregroundColor(.white)
-                    )
-                    .rotation3DEffect(
-                        .degrees(180),
-                        axis: (x: 0.0, y: 1.0, z: 0.0)
-                    )
+                // Back of the card (4th scan)
+                Group {
+                    if let backImage = card.backImage {
+                        Image(uiImage: backImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .clipped()
+                            .cornerRadius(12)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .overlay(
+                                Image(systemName: "questionmark")
+                                    .foregroundColor(.white)
+                            )
+                    }
+                }
+                .rotation3DEffect(
+                    .degrees(180),
+                    axis: (x: 0.0, y: 1.0, z: 0.0)
+                )
 
-                // Front of the card
-                if let frontImage = card.frontImage {
-                    Image(uiImage: frontImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                        .clipped()
-                        .cornerRadius(12)
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.gray)
-                        )
+                // Front of the card (1st scan)
+                Group {
+                    if let frontImage = card.frontImage {
+                        Image(uiImage: frontImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .clipped()
+                            .cornerRadius(12)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
+                            .overlay(
+                                Image(systemName: "photo")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
             }
             .rotation3DEffect(
@@ -57,7 +70,29 @@ struct SpinningCardView: View {
                     }
             )
             .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            .onAppear {
+                withAnimation(
+                    .linear(duration: 8)
+                    .repeatForever(autoreverses: false)
+                ) {
+                    rotation = 360
+                }
+            }
         }
         .aspectRatio(1/1.4, contentMode: .fit)
+    }
+}
+
+#Preview {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        SpinningCardView(card: Card(
+            frontImageData: nil,
+            backImageData: nil,
+            insideLeftImageData: nil,
+            insideRightImageData: nil
+        ))
+        .padding()
+        .frame(height: 350)
     }
 }
