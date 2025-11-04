@@ -114,18 +114,17 @@ struct CardsGridView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(viewModel.sortedCards) { card in
-                    SpinningCardView(card: card)
-                        .onTapGesture {
-                            selectedCard = card
-                        }
-                        .onLongPressGesture {
-                            // Haptic feedback
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
-                            
-                            cardToDelete = card
-                            showDeleteConfirmation = true
-                        }
+                    SpinningCardView(card: card, onDoubleTap: {
+                        selectedCard = card
+                    })
+                    .onLongPressGesture {
+                        // Haptic feedback
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                        
+                        cardToDelete = card
+                        showDeleteConfirmation = true
+                    }
                 }
             }
             .padding()

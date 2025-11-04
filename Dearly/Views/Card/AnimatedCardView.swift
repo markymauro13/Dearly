@@ -12,48 +12,64 @@ struct AnimatedCardView: View {
     
     @State private var isOpen = false
     @State private var xOffset: CGFloat = 0
+    
+    // 3D rotation state
+    @State private var rotationX: Double = 0
+    @State private var rotationY: Double = 0
+    @State private var currentRotationX: Double = 0
+    @State private var currentRotationY: Double = 0
 
     private let cardWidth: CGFloat = 320
     private let cardHeight: CGFloat = 224
-    private var pageWidth: CGFloat {
-        cardWidth / 2
-    }
+    private var pageWidth: CGFloat { cardWidth / 2 }
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Inside right page (static, always underneath)
-                Group {
-                    if let rightImage = card.insideRightImage {
-                        Image(uiImage: rightImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: pageWidth, height: cardHeight)
-                            .clipped()
-                    } else {
-                        Rectangle()
-                            .fill(Color.white)
-                            .frame(width: pageWidth, height: cardHeight)
-                            .overlay(Text("Right").foregroundColor(Color.black))
+                // MARK: - Back page (right side)
+                ZStack {
+                    // BACK COVER (outside when closed)
+                    Group {
+                        if let backImage = card.backImage {
+                            Image(uiImage: backImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: pageWidth, height: cardHeight)
+                                .clipped()
+                        } else {
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: pageWidth, height: cardHeight)
+                                .overlay(Text("Back").foregroundColor(.white))
+                        }
                     }
+                    // rotated so it’s only visible from behind
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                    .opacity(isOpen ? 0 : 1) // hide back cover when card is open
+                    
+                    // INSIDE RIGHT (visible when open)
+                    Group {
+                        if let rightImage = card.insideRightImage {
+                            Image(uiImage: rightImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: pageWidth, height: cardHeight)
+                                .clipped()
+                        } else {
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: pageWidth, height: cardHeight)
+                                .overlay(Text("Inside Right").foregroundColor(.black))
+                        }
+                    }
+                    .opacity(isOpen ? 1 : 0) // only show when open
                 }
                 .cornerRadius(16)
-                .opacity(isOpen ? 1 : 0)
                 .zIndex(0)
-                
-//                Rectangle()
-//                                .fill(LinearGradient(
-//                                    gradient: Gradient(colors: [Color.black.opacity(0.3), Color.gray.opacity(0.1)]),
-//                                    startPoint: .leading,
-//                                    endPoint: .trailing
-//                                ))
-//                                .frame(width: 2, height: cardHeight)
-//                                .opacity(isOpen ? 1 : 0)
-//                                .zIndex(0.5)
 
-                // Double-sided page: Front cover / Inside left
+                // MARK: - Front page (left side)
                 ZStack {
-                    // Front side (visible when closed)
+                    // FRONT COVER (outside when closed)
                     Group {
                         if let frontImage = card.frontImage {
                             Image(uiImage: frontImage)
@@ -65,16 +81,12 @@ struct AnimatedCardView: View {
                             Rectangle()
                                 .fill(Color.white)
                                 .frame(width: pageWidth, height: cardHeight)
-                                .overlay(Text("Tap to Open").foregroundColor(Color.black))
+                                .overlay(Text("Tap to Open").foregroundColor(.black))
                         }
                     }
                     .opacity(isOpen ? 0 : 1)
-                    .rotation3DEffect(
-                        .degrees(0),
-                        axis: (x: 0, y: 1, z: 0)
-                    )
                     
-                    // Back side (inside left - visible when open)
+                    // INSIDE LEFT (visible when open)
                     Group {
                         if let leftImage = card.insideLeftImage {
                             Image(uiImage: leftImage)
@@ -86,13 +98,10 @@ struct AnimatedCardView: View {
                             Rectangle()
                                 .fill(Color.white)
                                 .frame(width: pageWidth, height: cardHeight)
-                                .overlay(Text("Inside Left").foregroundColor(Color.black))
+                                .overlay(Text("Inside Left").foregroundColor(.black))
                         }
                     }
-                    .rotation3DEffect(
-                        .degrees(180),
-                        axis: (x: 0, y: 1, z: 0)
-                    )
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .opacity(isOpen ? 1 : 0)
                 }
                 .cornerRadius(16)
@@ -102,6 +111,7 @@ struct AnimatedCardView: View {
                     x: 0,
                     y: isOpen ? 0 : 8
                 )
+                // same open/close animation you had before
                 .rotation3DEffect(
                     .degrees(isOpen ? -180 : 0),
                     axis: (x: 0, y: 1, z: 0),
@@ -113,26 +123,52 @@ struct AnimatedCardView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .offset(x: xOffset)
+            // Apply 3D rotation to entire card
+            .rotation3DEffect(
+                .degrees(currentRotationX + rotationX),
+                axis: (x: 1, y: 0, z: 0)
+            )
+            .rotation3DEffect(
+                .degrees(currentRotationY + rotationY),
+                axis: (x: 0, y: 1, z: 0)
+            )
         }
         .frame(width: cardWidth, height: cardHeight)
-        .onTapGesture {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
-            
-            withAnimation(
-                .interpolatingSpring(
-                    mass: 1.0,
-                    stiffness: 100,
-                    damping: 15,
-                    initialVelocity: 0
-                )
-            ) {
-                isOpen.toggle()
-                xOffset = isOpen ? pageWidth / 2 : 0
-            }
-        }
+        .gesture(
+            // Drag gesture for 3D rotation
+            DragGesture()
+                .onChanged { value in
+                    rotationY = Double(value.translation.width) * 0.5
+                    rotationX = Double(-value.translation.height) * 0.5
+                }
+                .onEnded { _ in
+                    currentRotationX += rotationX
+                    currentRotationY += rotationY
+                    rotationX = 0
+                    rotationY = 0
+                }
+        )
+        .simultaneousGesture(
+            // Tap gesture for opening/closing card
+            TapGesture()
+                .onEnded {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
+                    
+                    withAnimation(
+                        .interpolatingSpring(
+                            mass: 1.0,
+                            stiffness: 100,
+                            damping: 15,
+                            initialVelocity: 0
+                        )
+                    ) {
+                        isOpen.toggle()
+                        xOffset = isOpen ? pageWidth / 2 : 0
+                    }
+                }
+        )
     }
-    
 }
 
 #Preview {
