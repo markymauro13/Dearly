@@ -22,6 +22,13 @@ struct AnimatedCardView: View {
     private let cardWidth: CGFloat = 320
     private let cardHeight: CGFloat = 224
     private var pageWidth: CGFloat { cardWidth / 2 }
+    private var normalizedRotationY: Double {
+        var angle = (currentRotationY + rotationY).truncatingRemainder(dividingBy: 360)
+        if angle > 180 { angle -= 360 }
+        if angle < -180 { angle += 360 }
+        return angle
+    }
+    private var isFacingFront: Bool { abs(normalizedRotationY) <= 90 }
     
     var body: some View {
         GeometryReader { geometry in
@@ -45,7 +52,7 @@ struct AnimatedCardView: View {
                     }
                     // rotated so it’s only visible from behind
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .opacity(isOpen ? 0 : 1) // hide back cover when card is open
+                    .opacity(isOpen ? (isFacingFront ? 0 : 1) : 1) // show when viewing back of open card
                     
                     // INSIDE RIGHT (visible when open)
                     Group {
@@ -62,7 +69,7 @@ struct AnimatedCardView: View {
                                 .overlay(Text("Inside Right").foregroundColor(.black))
                         }
                     }
-                    .opacity(isOpen ? 1 : 0) // only show when open
+                    .opacity(isOpen ? (isFacingFront ? 1 : 0) : 0)
                 }
                 .cornerRadius(16)
                 .zIndex(0)
@@ -84,7 +91,7 @@ struct AnimatedCardView: View {
                                 .overlay(Text("Tap to Open").foregroundColor(.black))
                         }
                     }
-                    .opacity(isOpen ? 0 : 1)
+                    .opacity((isOpen && isFacingFront) ? 0 : 1)
                     
                     // INSIDE LEFT (visible when open)
                     Group {
@@ -102,7 +109,7 @@ struct AnimatedCardView: View {
                         }
                     }
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .opacity(isOpen ? 1 : 0)
+                    .opacity((isOpen && isFacingFront) ? 1 : 0)
                 }
                 .cornerRadius(16)
                 .shadow(
