@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AnimatedCardView: View {
     let card: Card
+    @Binding var resetTrigger: Bool
     
     @State private var isOpen = false
     @State private var xOffset: CGFloat = 0
@@ -175,6 +176,20 @@ struct AnimatedCardView: View {
                     }
                 }
         )
+        .onChange(of: resetTrigger) { _ in
+            resetCard()
+        }
+    }
+    
+    private func resetCard() {
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            isOpen = false
+            xOffset = 0
+            rotationX = 0
+            rotationY = 0
+            currentRotationX = 0
+            currentRotationY = 0
+        }
     }
 }
 
@@ -186,7 +201,7 @@ struct AnimatedCardView: View {
             backImageData: nil,
             insideLeftImageData: nil,
             insideRightImageData: nil
-        ))
+        ), resetTrigger: .constant(false))
         .padding()
     }
 }

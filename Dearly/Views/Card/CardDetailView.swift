@@ -10,15 +10,26 @@ import SwiftUI
 struct CardDetailView: View {
     let card: Card
     @Environment(\.dismiss) private var dismiss
+    @State private var resetTrigger = false
     
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             
             VStack {
-                // Close button
+                // Top buttons
                 HStack {
+                    Button(action: {
+                        resetTrigger.toggle()
+                    }) {
+                        Image(systemName: "arrow.counterclockwise.circle.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding()
+                    
                     Spacer()
+                    
                     Button(action: {
                         dismiss()
                     }) {
@@ -32,7 +43,7 @@ struct CardDetailView: View {
                 Spacer()
                 
                 // Animated Card
-                AnimatedCardView(card: card)
+                AnimatedCardView(card: card, resetTrigger: $resetTrigger)
                     .padding(.horizontal, 20)
                 
                 Spacer()
