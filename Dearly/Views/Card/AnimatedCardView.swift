@@ -73,7 +73,7 @@ struct AnimatedCardView: View {
                     .opacity(isOpen ? (isFacingFront ? 1 : 0) : 0)
                 }
                 .cornerRadius(16)
-                .zIndex(0)
+                .zIndex(isFacingFront ? 0 : 1)
 
                 // MARK: - Front page (left side)
                 ZStack {
@@ -127,7 +127,7 @@ struct AnimatedCardView: View {
                     anchorZ: 0,
                     perspective: 0.4
                 )
-                .zIndex(1)
+                .zIndex(isFacingFront ? 1 : 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .offset(x: xOffset)
