@@ -17,6 +17,12 @@ struct Card: Identifiable, Codable {
     var dateScanned: Date
     var isFavorite: Bool
     
+    // Metadata
+    var sender: String?
+    var occasion: String?
+    var dateReceived: Date?
+    var notes: String?
+    
     init(
         id: UUID = UUID(),
         frontImageData: Data? = nil,
@@ -24,7 +30,11 @@ struct Card: Identifiable, Codable {
         insideLeftImageData: Data? = nil,
         insideRightImageData: Data? = nil,
         dateScanned: Date = Date(),
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        sender: String? = nil,
+        occasion: String? = nil,
+        dateReceived: Date? = nil,
+        notes: String? = nil
     ) {
         self.id = id
         self.frontImageData = frontImageData
@@ -33,6 +43,10 @@ struct Card: Identifiable, Codable {
         self.insideRightImageData = insideRightImageData
         self.dateScanned = dateScanned
         self.isFavorite = isFavorite
+        self.sender = sender
+        self.occasion = occasion
+        self.dateReceived = dateReceived
+        self.notes = notes
     }
     
     // Helper to get UIImage from stored data

@@ -70,6 +70,13 @@ struct AnimatedCardView: View {
                                 .overlay(Text("Inside Right").foregroundColor(.black))
                         }
                     }
+                    .rotation3DEffect(
+                        .degrees(isOpen ? 0 : 90),
+                        axis: (x: 0, y: 1, z: 0),
+                        anchor: .leading,
+                        anchorZ: 0,
+                        perspective: 0.4
+                    )
                     .opacity(isOpen ? (isFacingFront ? 1 : 0) : 0)
                 }
                 .cornerRadius(16)

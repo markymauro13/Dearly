@@ -19,6 +19,7 @@ class CardsViewModel: ObservableObject {
     @Published var cards: [Card] = []
     @Published var isShowingScanner = false
     @Published var sortOption: SortOption = .newest
+    @Published var selectedOccasionFilter: String? = nil
     
     private let userDefaultsKey = "savedCards"
     
@@ -29,14 +30,28 @@ class CardsViewModel: ObservableObject {
     // MARK: - Public Methods
     
     var sortedCards: [Card] {
+        let filtered = filteredCards
         switch sortOption {
         case .newest:
-            return cards.sorted { $0.dateScanned > $1.dateScanned }
+            return filtered.sorted { $0.dateScanned > $1.dateScanned }
         case .oldest:
-            return cards.sorted { $0.dateScanned < $1.dateScanned }
+            return filtered.sorted { $0.dateScanned < $1.dateScanned }
         case .favorites:
-            return cards.filter { $0.isFavorite }
+            return filtered.filter { $0.isFavorite }
         }
+    }
+    
+    private var filteredCards: [Card] {
+        // Filter by occasion if selected
+        if let occasionFilter = selectedOccasionFilter {
+            return cards.filter { $0.occasion == occasionFilter }
+        }
+        return cards
+    }
+    
+    var availableOccasions: [String] {
+        let occasions = cards.compactMap { $0.occasion }
+        return Array(Set(occasions)).sorted()
     }
     
     func addCard(_ card: Card) {

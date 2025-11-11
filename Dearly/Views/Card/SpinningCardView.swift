@@ -12,42 +12,25 @@ struct SpinningCardView: View {
     var onDoubleTap: (() -> Void)?
     
     @State private var isFlipped = false
-    @State private var hasPerformedInitialFlip = false
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Front of the card (shows when not flipped)
                 CardFrontView(card: card, width: geometry.size.width)
-                    .rotation3DEffect(.degrees(isFlipped ? 0 : -90), axis: (x: 0, y: 1, z: 0))
-                    .animation(isFlipped ? .easeInOut(duration: 0.35).delay(0.35) : .easeInOut(duration: 0.35), value: isFlipped)
+                    .rotation3DEffect(.degrees(isFlipped ? -90 : 0), axis: (x: 0, y: 1, z: 0))
+                    .animation(isFlipped ? .easeInOut(duration: 0.35) : .easeInOut(duration: 0.35).delay(0.35), value: isFlipped)
                 
                 // Back of the card (shows when flipped)
                 CardBackView(card: card, width: geometry.size.width)
-                    .rotation3DEffect(.degrees(isFlipped ? 90 : 0), axis: (x: 0, y: 1, z: 0))
-                    .animation(isFlipped ? .easeInOut(duration: 0.35) : .easeInOut(duration: 0.35).delay(0.35), value: isFlipped)
+                    .rotation3DEffect(.degrees(isFlipped ? 0 : 90), axis: (x: 0, y: 1, z: 0))
+                    .animation(isFlipped ? .easeInOut(duration: 0.35).delay(0.35) : .easeInOut(duration: 0.35), value: isFlipped)
             }
             .onTapGesture(count: 2) {
                 onDoubleTap?()
             }
             .onTapGesture {
                 isFlipped.toggle()
-            }
-            .onAppear {
-                // Perform one initial flip to show both sides exist
-                if !hasPerformedInitialFlip {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        withAnimation {
-                            isFlipped = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            withAnimation {
-                                isFlipped = false
-                            }
-                        }
-                        hasPerformedInitialFlip = true
-                    }
-                }
             }
         }
         .aspectRatio(1/1.4, contentMode: .fit)
