@@ -23,6 +23,7 @@ struct AnimatedCardView: View {
     private let cardWidth: CGFloat = 320
     private let cardHeight: CGFloat = 224
     private var pageWidth: CGFloat { cardWidth / 2 }
+    private let edgeThickness: CGFloat = 4
     private var normalizedRotationY: Double {
         var angle = (currentRotationY + rotationY).truncatingRemainder(dividingBy: 360)
         if angle > 180 { angle -= 360 }
@@ -30,6 +31,15 @@ struct AnimatedCardView: View {
         return angle
     }
     private var isFacingFront: Bool { abs(normalizedRotationY) <= 90 }
+    private func edgeGradient(forLeadingEdge leading: Bool) -> LinearGradient {
+        let shadow = Color.black.opacity(0.55)
+        let highlight = Color.white.opacity(0.5)
+        return LinearGradient(
+            colors: leading ? [shadow, highlight] : [highlight, shadow],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -51,6 +61,12 @@ struct AnimatedCardView: View {
                                 .overlay(Text("Back").foregroundColor(.white))
                         }
                     }
+                    .overlay(alignment: .leading) {
+                        thicknessEdge(isLeading: true, opacity: isOpen ? 0.7 : 0.45)
+                    }
+                    .overlay(alignment: .trailing) {
+                        thicknessEdge(isLeading: false, opacity: isOpen ? 0.25 : 0.15)
+                    }
                     // rotated so it’s only visible from behind
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .opacity(isOpen ? (isFacingFront ? 0 : 1) : 1) // show when viewing back of open card
@@ -69,6 +85,12 @@ struct AnimatedCardView: View {
                                 .frame(width: pageWidth, height: cardHeight)
                                 .overlay(Text("Inside Right").foregroundColor(.black))
                         }
+                    }
+                    .overlay(alignment: .leading) {
+                        thicknessEdge(isLeading: true, opacity: isOpen ? 0.4 : 0.1)
+                    }
+                    .overlay(alignment: .trailing) {
+                        thicknessEdge(isLeading: false, opacity: isOpen ? 0.25 : 0.1)
                     }
                     .rotation3DEffect(
                         .degrees(isOpen ? 0 : 90),
@@ -99,6 +121,12 @@ struct AnimatedCardView: View {
                                 .overlay(Text("Tap to Open").foregroundColor(.black))
                         }
                     }
+                    .overlay(alignment: .leading) {
+                        thicknessEdge(isLeading: true, opacity: isOpen ? 0.3 : 0.5)
+                    }
+                    .overlay(alignment: .trailing) {
+                        thicknessEdge(isLeading: false, opacity: isFacingFront ? 0.8 : 0.35)
+                    }
                     .opacity((isOpen && isFacingFront) ? 0 : 1)
                     
                     // INSIDE LEFT (visible when open)
@@ -115,6 +143,12 @@ struct AnimatedCardView: View {
                                 .frame(width: pageWidth, height: cardHeight)
                                 .overlay(Text("Inside Left").foregroundColor(.black))
                         }
+                    }
+                    .overlay(alignment: .leading) {
+                        thicknessEdge(isLeading: true, opacity: isOpen ? 0.35 : 0.15)
+                    }
+                    .overlay(alignment: .trailing) {
+                        thicknessEdge(isLeading: false, opacity: isOpen ? 0.5 : 0.25)
                     }
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .opacity((isOpen && isFacingFront) ? 1 : 0)
@@ -186,6 +220,15 @@ struct AnimatedCardView: View {
         .onChange(of: resetTrigger) { _ in
             resetCard()
         }
+    }
+    
+    @ViewBuilder
+    private func thicknessEdge(isLeading: Bool, opacity: Double) -> some View {
+        Rectangle()
+            .fill(edgeGradient(forLeadingEdge: isLeading))
+            .frame(width: edgeThickness)
+            .opacity(opacity)
+            .blur(radius: 0.25)
     }
     
     private func resetCard() {

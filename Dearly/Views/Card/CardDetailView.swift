@@ -8,12 +8,16 @@
 import SwiftUI
 
 struct CardDetailView: View {
-    @State var card: Card
-    var onUpdate: ((Card) -> Void)?
+    let cardId: UUID
+    @ObservedObject var viewModel: CardsViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var resetTrigger = false
     @State private var showingMetadataEdit = false
     @State private var showingShareSheet = false
+    
+    private var card: Card? {
+        viewModel.cards.first { $0.id == cardId }
+    }
     
     var body: some View {
         ZStack {
@@ -32,6 +36,20 @@ struct CardDetailView: View {
                         Image(systemName: "arrow.counterclockwise.circle.fill")
                             .font(.system(size: 30))
                             .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding()
+                    
+                    Button(action: {
+                        // Haptic feedback
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
+                        
+                        guard let card = card else { return }
+                        viewModel.toggleFavorite(for: card)
+                    }) {
+                        Image(systemName: card?.isFavorite == true ? "heart.fill" : "heart.circle.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(card?.isFavorite == true ? .red : .white.opacity(0.8))
                     }
                     .padding()
                     
@@ -80,13 +98,15 @@ struct CardDetailView: View {
                 Spacer()
                 
                 // Animated Card
-                AnimatedCardView(card: card, resetTrigger: $resetTrigger)
-                    .padding(.horizontal, 20)
+                if let card = card {
+                    AnimatedCardView(card: card, resetTrigger: $resetTrigger)
+                        .padding(.horizontal, 20)
+                }
                 
                 Spacer()
                 
                 // Metadata display
-                if card.sender != nil || card.occasion != nil || card.dateReceived != nil || card.notes != nil {
+                if let card = card, card.sender != nil || card.occasion != nil || card.dateReceived != nil || card.notes != nil {
                     VStack(spacing: 8) {
                         if let sender = card.sender {
                             HStack {
@@ -137,17 +157,18 @@ struct CardDetailView: View {
             }
         }
         .sheet(isPresented: $showingMetadataEdit) {
-            CardMetadataView(card: $card)
-                .onDisappear {
-                    onUpdate?(card)
-                }
+            if let index = viewModel.cards.firstIndex(where: { $0.id == cardId }) {
+                CardMetadataView(card: $viewModel.cards[index])
+            }
         }
         .sheet(isPresented: $showingShareSheet) {
-            ShareSheet(items: shareItems())
+            if let card = card {
+                ShareSheet(items: shareItems(for: card))
+            }
         }
     }
     
-    private func shareItems() -> [Any] {
+    private func shareItems(for card: Card) -> [Any] {
         var items: [Any] = []
         
         // Add card images
@@ -182,11 +203,14 @@ struct CardDetailView: View {
 }
 
 #Preview {
-    CardDetailView(card: Card(
+    let viewModel = CardsViewModel()
+    let card = Card(
         frontImageData: nil,
         backImageData: nil,
         insideLeftImageData: nil,
         insideRightImageData: nil
-    ))
+    )
+    viewModel.addCard(card)
+    return CardDetailView(cardId: card.id, viewModel: viewModel)
 }
 

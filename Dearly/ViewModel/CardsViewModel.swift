@@ -21,9 +21,10 @@ class CardsViewModel: ObservableObject {
     @Published var sortOption: SortOption = .newest
     @Published var selectedOccasionFilter: String? = nil
     
-    private let userDefaultsKey = "savedCards"
+    private let repository: CardRepositoryProtocol
     
-    init() {
+    init(repository: CardRepositoryProtocol = CardRepository()) {
+        self.repository = repository
         loadCards()
     }
     
@@ -81,16 +82,11 @@ class CardsViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func saveCards() {
-        if let encoded = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
-        }
+        repository.saveCards(cards)
     }
     
     private func loadCards() {
-        if let data = UserDefaults.standard.data(forKey: userDefaultsKey),
-           let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-            cards = decoded
-        }
+        cards = repository.loadCards()
     }
 }
 

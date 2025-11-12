@@ -159,13 +159,19 @@ struct CardsGridView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(viewModel.sortedCards) { card in
-                    SpinningCardView(card: card, onDoubleTap: {
-                        // Haptic feedback
-                        let impact = UIImpactFeedbackGenerator(style: .medium)
-                        impact.impactOccurred()
-                        
-                        selectedCard = card
-                    })
+                    SpinningCardView(
+                        card: card,
+                        onDoubleTap: {
+                            // Haptic feedback
+                            let impact = UIImpactFeedbackGenerator(style: .medium)
+                            impact.impactOccurred()
+                            
+                            selectedCard = card
+                        },
+                        onFavoriteToggle: {
+                            viewModel.toggleFavorite(for: card)
+                        }
+                    )
                     .onLongPressGesture {
                         // Haptic feedback
                         let impact = UIImpactFeedbackGenerator(style: .medium)
@@ -181,9 +187,7 @@ struct CardsGridView: View {
             .padding(.bottom, 100)
         }
         .fullScreenCover(item: $selectedCard) { card in
-            CardDetailView(card: card) { updatedCard in
-                viewModel.updateCard(updatedCard)
-            }
+            CardDetailView(cardId: card.id, viewModel: viewModel)
         }
         .alert("Delete Card?", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) {

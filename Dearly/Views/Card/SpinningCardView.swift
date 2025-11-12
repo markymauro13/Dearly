@@ -10,6 +10,7 @@ import SwiftUI
 struct SpinningCardView: View {
     let card: Card
     var onDoubleTap: (() -> Void)?
+    var onFavoriteToggle: (() -> Void)?  // ADD THIS
     
     @State private var isFlipped = false
 
@@ -25,6 +26,26 @@ struct SpinningCardView: View {
                 CardBackView(card: card, width: geometry.size.width)
                     .rotation3DEffect(.degrees(isFlipped ? 0 : 90), axis: (x: 0, y: 1, z: 0))
                     .animation(isFlipped ? .easeInOut(duration: 0.35).delay(0.35) : .easeInOut(duration: 0.35), value: isFlipped)
+                
+                // ADD THIS: Favorite heart overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                            onFavoriteToggle?()
+                        }) {
+                            Image(systemName: card.isFavorite ? "heart.fill" : "heart")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(card.isFavorite ? .red : .white)
+                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                .padding(8)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(8)
             }
             .onTapGesture(count: 2) {
                 onDoubleTap?()
