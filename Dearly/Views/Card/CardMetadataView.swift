@@ -74,6 +74,7 @@ struct CardMetadataView: View {
             }
             .navigationTitle("Edit Details")
             .navigationBarTitleDisplayMode(.inline)
+            .preferredColorScheme(.light)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

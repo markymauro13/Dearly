@@ -19,6 +19,14 @@ struct AnimatedCardView: View {
     @State private var rotationY: Double = 0
     @State private var currentRotationX: Double = 0
     @State private var currentRotationY: Double = 0
+    
+    // Zoom and pan state
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var panOffset: CGSize = .zero
+    @State private var lastPanOffset: CGSize = .zero
+    @State private var pinchLocation: CGPoint = .zero
+    @State private var isPinching: Bool = false
 
     private let cardWidth: CGFloat = 320
     private let cardHeight: CGFloat = 224
@@ -67,9 +75,10 @@ struct AnimatedCardView: View {
                     .overlay(alignment: .trailing) {
                         thicknessEdge(isLeading: false, opacity: isOpen ? 0.25 : 0.15)
                     }
-                    // rotated so it’s only visible from behind
+                    // rotated so it's only visible from behind
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .opacity(isOpen ? (isFacingFront ? 0 : 1) : 1) // show when viewing back of open card
+                    .opacity(isOpen ? 0 : 1)
+                    .animation(isOpen ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant hide when opening, smooth fade when closing
                     
                     // INSIDE RIGHT (visible when open)
                     Group {
@@ -92,6 +101,8 @@ struct AnimatedCardView: View {
                     .overlay(alignment: .trailing) {
                         thicknessEdge(isLeading: false, opacity: isOpen ? 0.25 : 0.1)
                     }
+                    .opacity(isOpen ? 1 : 0)
+                    .animation(isOpen ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant show when opening, smooth fade when closing
                     .rotation3DEffect(
                         .degrees(isOpen ? 0 : 90),
                         axis: (x: 0, y: 1, z: 0),
@@ -99,9 +110,8 @@ struct AnimatedCardView: View {
                         anchorZ: 0,
                         perspective: 0.4
                     )
-                    .opacity(isOpen ? (isFacingFront ? 1 : 0) : 0)
                 }
-                .cornerRadius(16)
+                .cornerRadius(20)
                 .zIndex(isFacingFront ? 0 : 1)
 
                 // MARK: - Front page (left side)
@@ -153,12 +163,18 @@ struct AnimatedCardView: View {
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .opacity((isOpen && isFacingFront) ? 1 : 0)
                 }
-                .cornerRadius(16)
+                .cornerRadius(20)
                 .shadow(
-                    color: Color.black.opacity(isOpen ? 0 : 0.5),
-                    radius: isOpen ? 0 : 15,
+                    color: Color.black.opacity(isOpen ? 0 : 0.12),
+                    radius: isOpen ? 0 : 20,
                     x: 0,
-                    y: isOpen ? 0 : 8
+                    y: isOpen ? 0 : 10
+                )
+                .shadow(
+                    color: Color.black.opacity(isOpen ? 0 : 0.08),
+                    radius: isOpen ? 0 : 8,
+                    x: 0,
+                    y: isOpen ? 0 : 4
                 )
                 // same open/close animation you had before
                 .rotation3DEffect(
@@ -183,22 +199,106 @@ struct AnimatedCardView: View {
             )
         }
         .frame(width: cardWidth, height: cardHeight)
+        // Apply zoom and pan - OUTSIDE the frame so it can expand
+        .scaleEffect(scale)
+        .offset(x: panOffset.width, y: panOffset.height)
         .gesture(
-            // Drag gesture for 3D rotation
+            // Drag gesture - pan when zoomed OR during pinch, otherwise rotate
             DragGesture()
                 .onChanged { value in
-                    rotationY = Double(value.translation.width) * 0.5
-                    rotationX = Double(-value.translation.height) * 0.5
+                    if scale > 1.0 || isPinching {
+                        // Pan when zoomed or while pinching
+                        panOffset = CGSize(
+                            width: lastPanOffset.width + value.translation.width,
+                            height: lastPanOffset.height + value.translation.height
+                        )
+                    } else {
+                        // Rotate when not zoomed
+                        rotationY = Double(value.translation.width) * 0.5
+                        rotationX = Double(-value.translation.height) * 0.5
+                    }
                 }
                 .onEnded { _ in
-                    currentRotationX += rotationX
-                    currentRotationY += rotationY
-                    rotationX = 0
-                    rotationY = 0
+                    if scale > 1.0 || isPinching {
+                        // Save pan position
+                        lastPanOffset = panOffset
+                    } else {
+                        // Save rotation position
+                        currentRotationX += rotationX
+                        currentRotationY += rotationY
+                        rotationX = 0
+                        rotationY = 0
+                    }
+                }
+        )
+        .gesture(
+            // Pinch to zoom with focal point
+            MagnificationGesture()
+                .onChanged { value in
+                    isPinching = true
+                    
+                    let delta = value / lastScale
+                    lastScale = value
+                    
+                    let oldScale = scale
+                    let newScale = min(max(scale * delta, 1.0), 5.0) // Limit zoom between 1x and 5x
+                    
+                    // Calculate focal point adjustment
+                    if oldScale != newScale {
+                        let scaleDifference = newScale - oldScale
+                        
+                        // Adjust pan offset to zoom into the pinch location
+                        // The pinch location is relative to the card center
+                        panOffset.width = lastPanOffset.width - (pinchLocation.x * scaleDifference)
+                        panOffset.height = lastPanOffset.height - (pinchLocation.y * scaleDifference)
+                        lastPanOffset = panOffset
+                    }
+                    
+                    scale = newScale
+                }
+                .onEnded { _ in
+                    lastScale = 1.0
+                    isPinching = false
+                    
+                    // Reset to 1.0 if close to it
+                    if scale < 1.1 {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            scale = 1.0
+                            panOffset = .zero
+                            lastPanOffset = .zero
+                        }
+                    }
+                }
+        )
+        .onTapGesture(count: 2, perform: {
+            // Double tap to toggle zoom
+            if scale > 1.0 {
+                // Zoom out
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+                
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    scale = 1.0
+                    panOffset = .zero
+                    lastPanOffset = .zero
+                }
+            }
+        })
+        .gesture(
+            // Track pinch location for focal point zoom
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    if isPinching {
+                        // Update pinch location relative to card center
+                        pinchLocation = CGPoint(
+                            x: value.location.x - cardWidth / 2,
+                            y: value.location.y - cardHeight / 2
+                        )
+                    }
                 }
         )
         .simultaneousGesture(
-            // Tap gesture for opening/closing card
+            // Tap gesture for opening/closing card - works at any zoom
             TapGesture()
                 .onEnded {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
@@ -239,6 +339,12 @@ struct AnimatedCardView: View {
             rotationY = 0
             currentRotationX = 0
             currentRotationY = 0
+            scale = 1.0
+            panOffset = .zero
+            lastPanOffset = .zero
+            lastScale = 1.0
+            pinchLocation = .zero
+            isPinching = false
         }
     }
 }

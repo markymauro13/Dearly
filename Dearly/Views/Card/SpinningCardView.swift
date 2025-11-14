@@ -10,9 +10,10 @@ import SwiftUI
 struct SpinningCardView: View {
     let card: Card
     var onDoubleTap: (() -> Void)?
-    var onFavoriteToggle: (() -> Void)?  // ADD THIS
+    var onFavoriteToggle: (() -> Void)?
     
     @State private var isFlipped = false
+    @State private var isPressed = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -27,7 +28,7 @@ struct SpinningCardView: View {
                     .rotation3DEffect(.degrees(isFlipped ? 0 : 90), axis: (x: 0, y: 1, z: 0))
                     .animation(isFlipped ? .easeInOut(duration: 0.35).delay(0.35) : .easeInOut(duration: 0.35), value: isFlipped)
                 
-                // ADD THIS: Favorite heart overlay
+                // Favorite heart overlay with pop animation
                 VStack {
                     HStack {
                         Spacer()
@@ -38,8 +39,10 @@ struct SpinningCardView: View {
                         }) {
                             Image(systemName: card.isFavorite ? "heart.fill" : "heart")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(card.isFavorite ? .red : .white)
+                                .foregroundColor(card.isFavorite ? Color(red: 1.0, green: 0.54, blue: 0.54) : .white)
                                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                .scaleEffect(card.isFavorite ? 1.1 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: card.isFavorite)
                                 .padding(8)
                         }
                     }
@@ -47,10 +50,16 @@ struct SpinningCardView: View {
                 }
                 .padding(8)
             }
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
             .onTapGesture(count: 2) {
                 onDoubleTap?()
             }
             .onTapGesture {
+                isPressed = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isPressed = false
+                }
                 isFlipped.toggle()
             }
         }
@@ -71,18 +80,19 @@ struct CardFrontView: View {
                     .scaledToFill()
                     .frame(width: width, height: width * 1.4)
                     .clipped()
-                    .cornerRadius(12)
+                    .cornerRadius(24)
             } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.2))
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.gray.opacity(0.1))
                     .frame(width: width, height: width * 1.4)
                     .overlay(
                         Image(systemName: "photo")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.gray.opacity(0.4))
                     )
             }
         }
-        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -99,18 +109,18 @@ struct CardBackView: View {
                     .scaledToFill()
                     .frame(width: width, height: width * 1.4)
                     .clipped()
-                    .cornerRadius(12)
+                    .cornerRadius(24)
                     .rotation3DEffect(
                         .degrees(180),
                         axis: (x: 0, y: 1, z: 0)
                     )
             } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.4))
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.gray.opacity(0.1))
                     .frame(width: width, height: width * 1.4)
                     .overlay(
                         Image(systemName: "questionmark")
-                            .foregroundColor(.white)
+                            .foregroundColor(.gray.opacity(0.4))
                     )
                     .rotation3DEffect(
                         .degrees(180),
@@ -118,7 +128,8 @@ struct CardBackView: View {
                     )
             }
         }
-        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 }
 

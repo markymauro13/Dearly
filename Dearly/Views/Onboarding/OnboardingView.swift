@@ -29,6 +29,7 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
         }
+        .preferredColorScheme(.light)
     }
 }
 
