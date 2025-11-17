@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+enum CardPage: String, CaseIterable {
+    case front = "Front"
+    case back = "Back"
+    case insideLeft = "Inside L"
+    case insideRight = "Inside R"
+}
+
 struct CardDetailView: View {
     let cardId: UUID
     @ObservedObject var viewModel: CardsViewModel
@@ -16,6 +23,7 @@ struct CardDetailView: View {
     @State private var showingShareSheet = false
     @State private var particleOffset: CGFloat = 0
     @State private var heartScale: CGFloat = 1.0
+    @State private var selectedPage: CardPage = .front
     
     private var card: Card? {
         viewModel.cards.first { $0.id == cardId }
@@ -119,11 +127,36 @@ struct CardDetailView: View {
                     
                     // Animated Card
                     if let card = card {
-                        AnimatedCardView(card: card, resetTrigger: $resetTrigger)
+                        AnimatedCardView(card: card, resetTrigger: $resetTrigger, selectedPage: $selectedPage)
                             .padding(.horizontal, 20)
                             .scaleEffect(heartScale)
                     }
                 }
+                
+                // Page selector buttons
+                HStack(spacing: 12) {
+                    ForEach(CardPage.allCases, id: \.self) { page in
+                        Button(action: {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                selectedPage = page
+                            }
+                        }) {
+                            Text(page.rawValue)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundColor(selectedPage == page ? .white : .white.opacity(0.6))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(selectedPage == page ? Color(red: 0.42, green: 0.67, blue: 1.0) : Color.white.opacity(0.1))
+                                        .shadow(color: selectedPage == page ? Color(red: 0.42, green: 0.67, blue: 1.0).opacity(0.4) : .clear, radius: 8, x: 0, y: 4)
+                                )
+                        }
+                    }
+                }
+                .padding(.top, 20)
                 
                 Spacer()
                 

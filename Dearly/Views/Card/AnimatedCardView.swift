@@ -10,6 +10,7 @@ import SwiftUI
 struct AnimatedCardView: View {
     let card: Card
     @Binding var resetTrigger: Bool
+    @Binding var selectedPage: CardPage
     
     @State private var isOpen = false
     @State private var xOffset: CGFloat = 0
@@ -54,7 +55,7 @@ struct AnimatedCardView: View {
             ZStack {
                 // MARK: - Back page (right side)
                 ZStack {
-                    // BACK COVER (outside when closed)
+                    // BACK COVER (outside when closed, visible from behind when open)
                     Group {
                         if let backImage = card.backImage {
                             Image(uiImage: backImage)
@@ -77,10 +78,10 @@ struct AnimatedCardView: View {
                     }
                     // rotated so it's only visible from behind
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                    .opacity(isOpen ? 0 : 1)
-                    .animation(isOpen ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant hide when opening, smooth fade when closing
+                    .opacity((isOpen && isFacingFront) ? 0 : 1)
+                    .animation((isOpen && isFacingFront) ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant hide when opening from front, smooth fade when closing
                     
-                    // INSIDE RIGHT (visible when open)
+                    // INSIDE RIGHT (visible when open and facing front)
                     Group {
                         if let rightImage = card.insideRightImage {
                             Image(uiImage: rightImage)
@@ -101,8 +102,8 @@ struct AnimatedCardView: View {
                     .overlay(alignment: .trailing) {
                         thicknessEdge(isLeading: false, opacity: isOpen ? 0.25 : 0.1)
                     }
-                    .opacity(isOpen ? 1 : 0)
-                    .animation(isOpen ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant show when opening, smooth fade when closing
+                    .opacity((isOpen && isFacingFront) ? 1 : 0)
+                    .animation((isOpen && isFacingFront) ? nil : .interpolatingSpring(mass: 1.0, stiffness: 100, damping: 15, initialVelocity: 0), value: isOpen) // Instant show when opening from front, smooth fade when closing
                     .rotation3DEffect(
                         .degrees(isOpen ? 0 : 90),
                         axis: (x: 0, y: 1, z: 0),
@@ -203,11 +204,11 @@ struct AnimatedCardView: View {
         .scaleEffect(scale)
         .offset(x: panOffset.width, y: panOffset.height)
         .gesture(
-            // Drag gesture - pan when zoomed OR during pinch, otherwise rotate
-            DragGesture()
+            // Drag gesture - behavior depends on zoom
+            DragGesture(minimumDistance: 5)
                 .onChanged { value in
                     if scale > 1.0 || isPinching {
-                        // Pan when zoomed or while pinching
+                        // Pan when zoomed
                         panOffset = CGSize(
                             width: lastPanOffset.width + value.translation.width,
                             height: lastPanOffset.height + value.translation.height
@@ -271,9 +272,8 @@ struct AnimatedCardView: View {
                 }
         )
         .onTapGesture(count: 2, perform: {
-            // Double tap to toggle zoom
+            // Double tap to reset zoom
             if scale > 1.0 {
-                // Zoom out
                 let impact = UIImpactFeedbackGenerator(style: .light)
                 impact.impactOccurred()
                 
@@ -320,6 +320,9 @@ struct AnimatedCardView: View {
         .onChange(of: resetTrigger) { _ in
             resetCard()
         }
+        .onChange(of: selectedPage) { newPage in
+            animateToPage(newPage)
+        }
     }
     
     @ViewBuilder
@@ -347,17 +350,65 @@ struct AnimatedCardView: View {
             isPinching = false
         }
     }
+    
+    private func animateToPage(_ page: CardPage) {
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+        
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            // Reset zoom/pan first
+            scale = 1.0
+            panOffset = .zero
+            lastPanOffset = .zero
+            rotationX = 0
+            rotationY = 0
+            
+            switch page {
+            case .front:
+                // Show closed card front page (flat, facing forward)
+                isOpen = false
+                xOffset = 0
+                currentRotationY = 0
+                currentRotationX = 0
+                
+            case .back:
+                // Show closed card back page (flat, facing forward)
+                isOpen = false
+                xOffset = 0
+                currentRotationY = 180
+                currentRotationX = 0
+                
+            case .insideLeft:
+                // Show open card inside left page (flat, facing forward)
+                isOpen = true
+                xOffset = pageWidth / 2
+                currentRotationY = 180 // Show the inside left which faces backward when open
+                currentRotationX = 0
+                
+            case .insideRight:
+                // Show open card inside right page (flat, facing forward)
+                isOpen = true
+                xOffset = pageWidth / 2
+                currentRotationY = 0 // Show the inside right which faces forward when open
+                currentRotationX = 0
+            }
+        }
+    }
 }
 
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        AnimatedCardView(card: Card(
-            frontImageData: nil,
-            backImageData: nil,
-            insideLeftImageData: nil,
-            insideRightImageData: nil
-        ), resetTrigger: .constant(false))
+        AnimatedCardView(
+            card: Card(
+                frontImageData: nil,
+                backImageData: nil,
+                insideLeftImageData: nil,
+                insideRightImageData: nil
+            ),
+            resetTrigger: .constant(false),
+            selectedPage: .constant(.front)
+        )
         .padding()
     }
 }
