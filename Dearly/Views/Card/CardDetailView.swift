@@ -10,8 +10,8 @@ import SwiftUI
 enum CardPage: String, CaseIterable {
     case front = "Front"
     case back = "Back"
-    case insideLeft = "Inside L"
-    case insideRight = "Inside R"
+    case insideLeft = "Outside"
+    case insideRight = "Inside"
 }
 
 struct CardDetailView: View {
@@ -133,89 +133,115 @@ struct CardDetailView: View {
                     }
                 }
                 
-                // Page selector buttons
-                HStack(spacing: 12) {
+                // Compact segmented control for page selection
+                Picker("", selection: $selectedPage) {
                     ForEach(CardPage.allCases, id: \.self) { page in
-                        Button(action: {
-                            let impact = UIImpactFeedbackGenerator(style: .light)
-                            impact.impactOccurred()
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                selectedPage = page
-                            }
-                        }) {
-                            Text(page.rawValue)
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundColor(selectedPage == page ? .white : .white.opacity(0.6))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Capsule()
-                                        .fill(selectedPage == page ? Color(red: 0.42, green: 0.67, blue: 1.0) : Color.white.opacity(0.1))
-                                        .shadow(color: selectedPage == page ? Color(red: 0.42, green: 0.67, blue: 1.0).opacity(0.4) : .clear, radius: 8, x: 0, y: 4)
-                                )
-                        }
+                        Text(page.rawValue).tag(page)
                     }
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 40)
                 .padding(.top, 20)
+                .onChange(of: selectedPage) { _ in
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                }
                 
                 Spacer()
                 
-                // Beautiful metadata cards
+                // Unified metadata card
                 if let card = card, card.sender != nil || card.occasion != nil || card.dateReceived != nil || card.notes != nil {
-                    VStack(spacing: 12) {
-                        // Sender chip
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Sender row
                         if let sender = card.sender {
-                            MetadataChip(
-                                icon: "person.fill",
-                                text: sender,
-                                color: Color(red: 0.75, green: 0.65, blue: 1.0) // Lavender
-                            )
-                        }
-                        
-                        HStack(spacing: 12) {
-                            // Occasion chip
-                            if let occasion = card.occasion {
-                                MetadataChip(
-                                    icon: "gift.fill",
-                                    text: occasion,
-                                    color: Color(red: 1.0, green: 0.54, blue: 0.54) // Coral
-                                )
-                            }
-                            
-                            // Date chip
-                            if let dateReceived = card.dateReceived {
-                                MetadataChip(
-                                    icon: "calendar",
-                                    text: dateReceived.formatted(date: .abbreviated, time: .omitted),
-                                    color: Color(red: 0.42, green: 0.67, blue: 1.0) // Ocean Blue
-                                )
+                            HStack(spacing: 12) {
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(red: 0.75, green: 0.65, blue: 1.0))
+                                    .frame(width: 24)
+                                
+                                Text(sender)
+                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.95))
+                                
+                                Spacer()
                             }
                         }
                         
-                        // Notes in frosted card
+                        // Occasion row
+                        if let occasion = card.occasion {
+                            HStack(spacing: 12) {
+                                Image(systemName: "gift.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(red: 1.0, green: 0.54, blue: 0.54))
+                                    .frame(width: 24)
+                                
+                                Text(occasion)
+                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.95))
+                                
+                                Spacer()
+                            }
+                        }
+                        
+                        // Date row
+                        if let dateReceived = card.dateReceived {
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(red: 0.42, green: 0.67, blue: 1.0))
+                                    .frame(width: 24)
+                                
+                                Text(dateReceived.formatted(date: .abbreviated, time: .omitted))
+                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.95))
+                                
+                                Spacer()
+                            }
+                        }
+                        
+                        // Notes row (if present)
                         if let notes = card.notes, !notes.isEmpty {
-                            Text(notes)
-                                .font(.system(size: 14, design: .rounded))
-                                .foregroundColor(.white.opacity(0.9))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(.ultraThinMaterial.opacity(0.6))
-                                        .shadow(color: .white.opacity(0.1), radius: 8, x: 0, y: 4)
-                                )
-                                .padding(.horizontal, 32)
-                                .padding(.top, 4)
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "note.text")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(Color(red: 0.6, green: 0.8, blue: 0.6))
+                                        .frame(width: 24)
+                                    
+                                    Text("Notes")
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.white.opacity(0.7))
+                                    
+                                    Spacer()
+                                }
+                                
+                                Text(notes)
+                                    .font(.system(size: 14, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .lineLimit(3)
+                                    .padding(.leading, 36)
+                            }
                         }
                     }
-                    .padding(.bottom, 20)
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial.opacity(0.5))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
                 }
                 
-                // Elegant instruction text
-                Text("Tap to open • Drag to rotate • Pinch to zoom / drag to pan")
-                    .font(.system(size: 13, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
+                // Subtle instruction text
+                Text("Drag to rotate • Pinch to zoom • Tap to open")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundColor(.white.opacity(0.35))
                     .padding(.bottom, 40)
             }
         }
