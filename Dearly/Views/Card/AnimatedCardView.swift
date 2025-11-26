@@ -112,7 +112,7 @@ struct AnimatedCardView: View {
                         perspective: 0.4
                     )
                 }
-                .cornerRadius(20)
+                .cornerRadius(4)
                 .zIndex(isFacingFront ? 0 : 1)
 
                 // MARK: - Front page (left side)
@@ -164,7 +164,7 @@ struct AnimatedCardView: View {
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .opacity((isOpen && isFacingFront) ? 1 : 0)
                 }
-                .cornerRadius(20)
+                .cornerRadius(4)
                 .shadow(
                     color: Color.black.opacity(isOpen ? 0 : 0.12),
                     radius: isOpen ? 0 : 20,

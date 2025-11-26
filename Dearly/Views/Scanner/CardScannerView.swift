@@ -11,6 +11,7 @@ import VisionKit
 struct CardScannerView: UIViewControllerRepresentable {
     @Environment(\.dismiss) private var dismiss
     let onScanComplete: ([UIImage]) -> Void
+    var onCancel: (() -> Void)?
     
     func makeUIViewController(context: Context) -> VNDocumentCameraViewController {
         let scanner = VNDocumentCameraViewController()
@@ -42,16 +43,17 @@ struct CardScannerView: UIViewControllerRepresentable {
             }
             
             parent.onScanComplete(scannedImages)
-            controller.dismiss(animated: true)
         }
         
         func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
-            controller.dismiss(animated: true)
+            parent.onCancel?()
+            parent.dismiss()
         }
         
         func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
             print("Document scanning failed with error: \(error.localizedDescription)")
-            controller.dismiss(animated: true)
+            parent.onCancel?()
+            parent.dismiss()
         }
     }
 }

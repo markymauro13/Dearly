@@ -15,11 +15,12 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Soft gradient background
+                // Warm cream gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color(red: 0.98, green: 0.98, blue: 1.0),
-                        Color.white
+                        Color(red: 1.0, green: 0.98, blue: 0.96),  // Warm cream
+                        Color(red: 0.99, green: 0.97, blue: 0.95), // Soft ivory
+                        Color(red: 1.0, green: 0.99, blue: 0.98)   // Pearl white
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
@@ -30,7 +31,7 @@ struct HomeView: View {
                     // Sort options - modern pill design
                     if !viewModel.cards.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
+                            HStack(spacing: 12) {
                                 ForEach(SortOption.allCases, id: \.self) { option in
                                     Button(action: {
                                         let impact = UIImpactFeedbackGenerator(style: .light)
@@ -40,20 +41,29 @@ struct HomeView: View {
                                         }
                                     }) {
                                         Text(option.rawValue)
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundColor(viewModel.sortOption == option ? .white : .black.opacity(0.7))
-                                            .padding(.horizontal, 18)
-                                            .padding(.vertical, 10)
+                                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                                            .foregroundColor(viewModel.sortOption == option ? .white : Color(red: 0.4, green: 0.35, blue: 0.35))
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 9)
                                             .background(
                                                 Group {
                                                     if viewModel.sortOption == option {
                                                         Capsule()
-                                                            .fill(Color(red: 0.42, green: 0.67, blue: 1.0))
-                                                            .shadow(color: Color(red: 0.42, green: 0.67, blue: 1.0).opacity(0.3), radius: 8, x: 0, y: 4)
+                                                            .fill(
+                                                                LinearGradient(
+                                                                    colors: [
+                                                                        Color(red: 0.85, green: 0.55, blue: 0.55),
+                                                                        Color(red: 0.75, green: 0.45, blue: 0.50)
+                                                                    ],
+                                                                    startPoint: .topLeading,
+                                                                    endPoint: .bottomTrailing
+                                                                )
+                                                            )
+                                                            .shadow(color: Color(red: 0.85, green: 0.55, blue: 0.55).opacity(0.35), radius: 8, x: 0, y: 4)
                                                     } else {
                                                         Capsule()
-                                                            .fill(Color.white)
-                                                            .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+                                                            .fill(Color.white.opacity(0.9))
+                                                            .shadow(color: Color(red: 0.6, green: 0.5, blue: 0.5).opacity(0.08), radius: 6, x: 0, y: 3)
                                                     }
                                                 }
                                             )
@@ -74,7 +84,7 @@ struct HomeView: View {
                     }
                 }
                 
-                // Floating Action Button - elegant design
+                // Floating Action Button - warm elegant design
                 VStack {
                     Spacer()
                     HStack {
@@ -87,14 +97,14 @@ struct HomeView: View {
                             Image(systemName: "plus")
                                 .font(.system(size: 22, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
+                                .frame(width: 60, height: 60)
                                 .background(
                                     ZStack {
-                                        // Subtle gradient
+                                        // Warm rose gradient
                                         LinearGradient(
                                             gradient: Gradient(colors: [
-                                                Color(red: 0.42, green: 0.67, blue: 1.0),
-                                                Color(red: 0.35, green: 0.60, blue: 0.95)
+                                                Color(red: 0.90, green: 0.55, blue: 0.55),
+                                                Color(red: 0.78, green: 0.42, blue: 0.48)
                                             ]),
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -102,17 +112,24 @@ struct HomeView: View {
                                     }
                                 )
                                 .clipShape(Circle())
-                                .shadow(color: Color(red: 0.42, green: 0.67, blue: 1.0).opacity(0.3), radius: 16, x: 0, y: 8)
-                                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                                .shadow(color: Color(red: 0.85, green: 0.50, blue: 0.50).opacity(0.4), radius: 16, x: 0, y: 8)
+                                .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
                         }
                         .padding(.trailing, 24)
                         .padding(.bottom, 24)
                     }
                 }
             }
-            .navigationTitle("Dearly")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .preferredColorScheme(.light)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Dearly")
+                        .font(.custom("Snell Roundhand", size: 30))
+                        .foregroundColor(Color(red: 0.40, green: 0.32, blue: 0.32))
+                }
+            }
             .toolbar {
                 // Developer Settings Button
                 ToolbarItem(placement: .topBarLeading) {
@@ -173,22 +190,40 @@ struct HomeView: View {
 // MARK: - Empty State View
 struct EmptyStateView: View {
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             Spacer()
             
-            Image(systemName: "heart.text.square")
-                .font(.system(size: 60))
-                .foregroundColor(.gray.opacity(0.5))
-            
-            VStack(spacing: 8) {
-                Text("No Cards Yet")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.black)
+            // Warm heart icon with subtle glow
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.95, green: 0.90, blue: 0.88).opacity(0.6))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 20)
                 
-                Text("Tap the + button to scan your first card")
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundColor(.gray)
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.90, green: 0.60, blue: 0.60),
+                                Color(red: 0.80, green: 0.50, blue: 0.55)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            
+            VStack(spacing: 12) {
+                Text("Your Memories Await")
+                    .font(.custom("Snell Roundhand", size: 28))
+                    .foregroundColor(Color(red: 0.35, green: 0.30, blue: 0.30))
+                
+                Text("Every card holds a piece of someone's heart.\nTap + to preserve your first cherished memory.")
+                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .foregroundColor(Color(red: 0.5, green: 0.45, blue: 0.45))
                     .multilineTextAlignment(.center)
+                    .lineSpacing(4)
                     .padding(.horizontal, 40)
             }
             
@@ -213,13 +248,9 @@ struct CardsGridView: View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(viewModel.sortedCards) { card in
-                    SpinningCardView(
+                    CardItemView(
                         card: card,
-                        onDoubleTap: {
-                            // Haptic feedback
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
-                            
+                        onTap: {
                             selectedCard = card
                         },
                         onFavoriteToggle: {
