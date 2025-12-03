@@ -22,6 +22,7 @@ struct CardMetadataView: View {
         "Holiday",
         "Anniversary",
         "Thank You",
+        "Just Because",
         "Get Well",
         "Sympathy",
         "Congratulations",

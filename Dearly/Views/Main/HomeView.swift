@@ -33,47 +33,28 @@ struct HomeView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 ForEach(SortOption.allCases, id: \.self) { option in
-                                    Button(action: {
-                                        let impact = UIImpactFeedbackGenerator(style: .light)
-                                        impact.impactOccurred()
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            viewModel.sortOption = option
+                                    SortButton(
+                                        option: option,
+                                        isSelected: viewModel.sortOption == option,
+                                        action: {
+                                            let impact = UIImpactFeedbackGenerator(style: .light)
+                                            impact.impactOccurred()
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                viewModel.sortOption = option
+                                            }
                                         }
-                                    }) {
-                                        Text(option.rawValue)
-                                            .font(.system(size: 13, weight: .medium, design: .rounded))
-                                            .foregroundColor(viewModel.sortOption == option ? .white : Color(red: 0.4, green: 0.35, blue: 0.35))
-                                            .padding(.horizontal, 16)
-                                            .padding(.vertical, 9)
-                                            .background(
-                                                Group {
-                                                    if viewModel.sortOption == option {
-                                                        Capsule()
-                                                            .fill(
-                                                                LinearGradient(
-                                                                    colors: [
-                                                                        Color(red: 0.85, green: 0.55, blue: 0.55),
-                                                                        Color(red: 0.75, green: 0.45, blue: 0.50)
-                                                                    ],
-                                                                    startPoint: .topLeading,
-                                                                    endPoint: .bottomTrailing
-                                                                )
-                                                            )
-                                                            .shadow(color: Color(red: 0.85, green: 0.55, blue: 0.55).opacity(0.35), radius: 8, x: 0, y: 4)
-                                                    } else {
-                                                        Capsule()
-                                                            .fill(Color.white.opacity(0.9))
-                                                            .shadow(color: Color(red: 0.6, green: 0.5, blue: 0.5).opacity(0.08), radius: 6, x: 0, y: 3)
-                                                    }
-                                                }
-                                            )
-                                    }
+                                    )
                                 }
                             }
                             .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
                         }
-                        .padding(.top, 8)
-                        .padding(.bottom, 16)
+                        .background(
+                            // Extended background to prevent shadow clipping
+                            Color(red: 1.0, green: 0.98, blue: 0.96)
+                                .ignoresSafeArea(edges: .horizontal)
+                        )
+                        .padding(.bottom, 12)
                     }
                     
                     // Main content
@@ -183,6 +164,51 @@ struct HomeView: View {
                 viewModel: viewModel,
                 hasCompletedOnboarding: $hasCompletedOnboarding
             )
+        }
+    }
+}
+
+// MARK: - Sort Button Component
+struct SortButton: View {
+    let option: SortOption
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(option.rawValue)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(isSelected ? .white : Color(red: 0.4, green: 0.35, blue: 0.35))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(
+                    ZStack {
+                        if isSelected {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.85, green: 0.55, blue: 0.55),
+                                            Color(red: 0.75, green: 0.45, blue: 0.50)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        } else {
+                            Capsule()
+                                .fill(Color.white.opacity(0.9))
+                        }
+                    }
+                )
+                .shadow(
+                    color: isSelected ? 
+                        Color(red: 0.85, green: 0.55, blue: 0.55).opacity(0.35) : 
+                        Color(red: 0.6, green: 0.5, blue: 0.5).opacity(0.08),
+                    radius: isSelected ? 8 : 6,
+                    x: 0,
+                    y: isSelected ? 4 : 3
+                )
         }
     }
 }
