@@ -8,8 +8,8 @@
 import Foundation
 import UIKit
 
-/// Enumeration representing the different sides of a card
-enum CardSide: String {
+/// Enumeration representing the different sides of a card for image storage
+enum ImageSide: String {
     case front = "front"
     case back = "back"
     case insideLeft = "insideLeft"
@@ -48,7 +48,7 @@ final class ImageStorageService {
     ///   - cardId: The unique identifier of the card
     ///   - side: The side of the card (front, back, etc.)
     /// - Returns: The relative file path if successful, nil otherwise
-    func saveImage(_ image: UIImage, for cardId: UUID, side: CardSide) -> String? {
+    func saveImage(_ image: UIImage, for cardId: UUID, side: ImageSide) -> String? {
         // Create card-specific directory
         let cardDirectory = imagesDirectory.appendingPathComponent(cardId.uuidString, isDirectory: true)
         

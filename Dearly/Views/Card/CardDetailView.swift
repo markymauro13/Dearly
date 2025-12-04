@@ -402,6 +402,7 @@ struct FloatingParticles: View {
 #Preview {
     let viewModel = CardsViewModel()
     let card = Card()
+    viewModel.cards.append(card)
     return CardDetailView(cardId: card.id, viewModel: viewModel)
         .modelContainer(for: Card.self, inMemory: true)
 }

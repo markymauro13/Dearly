@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import UIKit
 
 /// Repository for managing Card persistence with SwiftData
 /// Handles coordination between SwiftData and ImageStorageService
@@ -75,10 +76,10 @@ final class CardRepository {
         insideRightImage: UIImage?,
         for cardId: UUID
     ) -> (front: String?, back: String?, insideLeft: String?, insideRight: String?) {
-        let frontPath = frontImage.flatMap { imageStorage.saveImage($0, for: cardId, side: .front) }
-        let backPath = backImage.flatMap { imageStorage.saveImage($0, for: cardId, side: .back) }
-        let insideLeftPath = insideLeftImage.flatMap { imageStorage.saveImage($0, for: cardId, side: .insideLeft) }
-        let insideRightPath = insideRightImage.flatMap { imageStorage.saveImage($0, for: cardId, side: .insideRight) }
+        let frontPath = frontImage.flatMap { imageStorage.saveImage($0, for: cardId, side: ImageSide.front) }
+        let backPath = backImage.flatMap { imageStorage.saveImage($0, for: cardId, side: ImageSide.back) }
+        let insideLeftPath = insideLeftImage.flatMap { imageStorage.saveImage($0, for: cardId, side: ImageSide.insideLeft) }
+        let insideRightPath = insideRightImage.flatMap { imageStorage.saveImage($0, for: cardId, side: ImageSide.insideRight) }
         
         return (frontPath, backPath, insideLeftPath, insideRightPath)
     }

@@ -82,7 +82,7 @@ class CardsViewModel: ObservableObject {
             insideLeftImage: insideLeftImage,
             insideRightImage: insideRightImage,
             for: cardId
-        ) ?? (nil, nil, nil, nil)
+        ) ?? (front: nil, back: nil, insideLeft: nil, insideRight: nil)
         
         // Create card with file paths
         let card = Card(
