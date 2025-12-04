@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CardItemView: View {
     let card: Card
@@ -161,13 +162,9 @@ struct CardBackView: View {
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        CardItemView(card: Card(
-            frontImageData: nil,
-            backImageData: nil,
-            insideLeftImageData: nil,
-            insideRightImageData: nil
-        ))
-        .padding()
-        .frame(height: 350)
+        CardItemView(card: Card())
+            .padding()
+            .frame(height: 350)
     }
+    .modelContainer(for: Card.self, inMemory: true)
 }

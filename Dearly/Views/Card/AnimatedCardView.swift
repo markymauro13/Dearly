@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AnimatedCardView: View {
     let card: Card
@@ -400,15 +401,11 @@ struct AnimatedCardView: View {
     ZStack {
         Color.black.ignoresSafeArea()
         AnimatedCardView(
-            card: Card(
-                frontImageData: nil,
-                backImageData: nil,
-                insideLeftImageData: nil,
-                insideRightImageData: nil
-            ),
+            card: Card(),
             resetTrigger: .constant(false),
             selectedPage: .constant(.front)
         )
         .padding()
     }
+    .modelContainer(for: Card.self, inMemory: true)
 }

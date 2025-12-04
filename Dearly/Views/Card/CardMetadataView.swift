@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CardMetadataView: View {
     @Binding var card: Card
@@ -102,11 +103,6 @@ struct CardMetadataView: View {
 }
 
 #Preview {
-    CardMetadataView(card: .constant(Card(
-        frontImageData: nil,
-        backImageData: nil,
-        insideLeftImageData: nil,
-        insideRightImageData: nil
-    )))
+    CardMetadataView(card: .constant(Card()))
+        .modelContainer(for: Card.self, inMemory: true)
 }
-

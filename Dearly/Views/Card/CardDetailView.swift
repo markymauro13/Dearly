@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 enum CardPage: String, CaseIterable {
     case front = "Front"
@@ -400,13 +401,8 @@ struct FloatingParticles: View {
 
 #Preview {
     let viewModel = CardsViewModel()
-    let card = Card(
-        frontImageData: nil,
-        backImageData: nil,
-        insideLeftImageData: nil,
-        insideRightImageData: nil
-    )
-    viewModel.addCard(card)
+    let card = Card()
+    viewModel.cards.append(card)
     return CardDetailView(cardId: card.id, viewModel: viewModel)
+        .modelContainer(for: Card.self, inMemory: true)
 }
-
