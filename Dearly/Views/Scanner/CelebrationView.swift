@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 // MARK: - Celebration View
 struct CelebrationView: View {
@@ -270,5 +271,5 @@ struct ConfettiPieceView: View {
         onScanAnother: {},
         onDone: {}
     )
+    .modelContainer(for: Card.self, inMemory: true)
 }
-

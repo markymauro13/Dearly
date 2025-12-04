@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = CardsViewModel()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @State private var showingDevSettings = false
@@ -154,6 +156,9 @@ struct HomeView: View {
                         }
                     }
                 }
+            }
+            .onAppear {
+                viewModel.configure(with: modelContext)
             }
         }
         .sheet(isPresented: $viewModel.isShowingScanner) {
@@ -320,6 +325,5 @@ struct CardsGridView: View {
 
 #Preview {
     HomeView()
+        .modelContainer(for: Card.self, inMemory: true)
 }
-
-

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
 enum SortOption: String, CaseIterable {
     case newest = "Newest"
@@ -21,10 +22,16 @@ class CardsViewModel: ObservableObject {
     @Published var sortOption: SortOption = .newest
     @Published var selectedOccasionFilter: String? = nil
     
-    private let repository: CardRepositoryProtocol
+    private var repository: CardRepository?
+    private let imageStorage = ImageStorageService.shared
     
-    init(repository: CardRepositoryProtocol = CardRepository()) {
-        self.repository = repository
+    init() {
+        // Repository will be set when modelContext is available
+    }
+    
+    /// Configure the view model with a model context
+    func configure(with modelContext: ModelContext) {
+        self.repository = CardRepository(modelContext: modelContext)
         loadCards()
     }
     
@@ -55,38 +62,77 @@ class CardsViewModel: ObservableObject {
         return Array(Set(occasions)).sorted()
     }
     
-    func addCard(_ card: Card) {
+    /// Adds a new card with images
+    func addCard(
+        frontImage: UIImage?,
+        backImage: UIImage?,
+        insideLeftImage: UIImage?,
+        insideRightImage: UIImage?,
+        sender: String? = nil,
+        occasion: String? = nil,
+        dateReceived: Date? = nil,
+        notes: String? = nil
+    ) -> Card {
+        let cardId = UUID()
+        
+        // Save images to file system
+        let paths = repository?.saveImages(
+            frontImage: frontImage,
+            backImage: backImage,
+            insideLeftImage: insideLeftImage,
+            insideRightImage: insideRightImage,
+            for: cardId
+        ) ?? (nil, nil, nil, nil)
+        
+        // Create card with file paths
+        let card = Card(
+            id: cardId,
+            frontImagePath: paths.front,
+            backImagePath: paths.back,
+            insideLeftImagePath: paths.insideLeft,
+            insideRightImagePath: paths.insideRight,
+            dateScanned: Date(),
+            isFavorite: false,
+            sender: sender,
+            occasion: occasion,
+            dateReceived: dateReceived,
+            notes: notes
+        )
+        
+        repository?.addCard(card)
         cards.insert(card, at: 0) // Add to beginning for newest first
-        saveCards()
+        
+        return card
     }
     
     func deleteCard(_ card: Card) {
+        repository?.deleteCard(card)
         cards.removeAll { $0.id == card.id }
-        saveCards()
     }
     
     func updateCard(_ card: Card) {
+        repository?.updateCard()
+        // SwiftData tracks changes automatically, just refresh local array
         if let index = cards.firstIndex(where: { $0.id == card.id }) {
             cards[index] = card
-            saveCards()
         }
     }
     
     func toggleFavorite(for card: Card) {
-        if let index = cards.firstIndex(where: { $0.id == card.id }) {
-            cards[index].isFavorite.toggle()
-            saveCards()
-        }
+        card.isFavorite.toggle()
+        repository?.updateCard()
+        objectWillChange.send()
+    }
+    
+    /// Clears all data (for testing/reset)
+    func clearAllData() {
+        repository?.clearAllData()
+        cards.removeAll()
     }
     
     // MARK: - Private Methods
     
-    private func saveCards() {
-        repository.saveCards(cards)
-    }
-    
-    private func loadCards() {
-        cards = repository.loadCards()
+    func loadCards() {
+        cards = repository?.fetchAllCards() ?? []
     }
 }
-

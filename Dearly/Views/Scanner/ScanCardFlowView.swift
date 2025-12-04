@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 // MARK: - Card Type
 enum CardType: String, CaseIterable {
@@ -458,14 +459,14 @@ struct ScanCardFlowView: View {
     }
     
     private func saveCard() {
-        let card = Card(
-            frontImageData: frontImage?.jpegData(compressionQuality: 0.8),
-            backImageData: backImage?.jpegData(compressionQuality: 0.8),
-            insideLeftImageData: selectedCardType == .traditional ? insideLeftImage?.jpegData(compressionQuality: 0.8) : nil,
-            insideRightImageData: selectedCardType == .traditional ? insideRightImage?.jpegData(compressionQuality: 0.8) : nil
+        // Save card with images via ViewModel (images saved to file system)
+        let card = viewModel.addCard(
+            frontImage: frontImage,
+            backImage: backImage,
+            insideLeftImage: selectedCardType == .traditional ? insideLeftImage : nil,
+            insideRightImage: selectedCardType == .traditional ? insideRightImage : nil
         )
         
-        viewModel.addCard(card)
         savedCard = card
         
         // Always switch to "Newest" so user sees their newly scanned card
@@ -747,4 +748,5 @@ struct NextStepHint: View {
 
 #Preview {
     ScanCardFlowView(viewModel: CardsViewModel())
+        .modelContainer(for: Card.self, inMemory: true)
 }

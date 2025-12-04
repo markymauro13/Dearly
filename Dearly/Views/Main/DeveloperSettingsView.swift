@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct DeveloperSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -89,35 +90,9 @@ struct DeveloperSettingsView: View {
     }
     
     private func addDummyCard() {
-        let dummyCard = createDummyCard(
-            sender: "Test Sender \(Int.random(in: 1...100))",
-            occasion: ["Birthday", "Holiday", "Anniversary", "Thank You"].randomElement() ?? "Birthday"
-        )
-        viewModel.addCard(dummyCard)
+        let sender = "Test Sender \(Int.random(in: 1...100))"
+        let occasion = ["Birthday", "Holiday", "Anniversary", "Thank You"].randomElement() ?? "Birthday"
         
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-    }
-    
-    private func addMultipleDummyCards() {
-        let senders = ["Mom", "Dad", "Grandma", "Best Friend", "Aunt Sarah"]
-        let occasions = ["Birthday", "Holiday", "Anniversary", "Thank You", "Get Well"]
-        
-        for i in 0..<5 {
-            let dummyCard = createDummyCard(
-                sender: senders[i],
-                occasion: occasions[i]
-            )
-            viewModel.addCard(dummyCard)
-        }
-        
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-    }
-    
-    private func createDummyCard(sender: String, occasion: String) -> Card {
         // Premium muted color palette
         let colors: [UIColor] = [
             UIColor(red: 0.75, green: 0.65, blue: 1.0, alpha: 1.0),    // Lavender
@@ -128,18 +103,52 @@ struct DeveloperSettingsView: View {
             UIColor(red: 0.85, green: 0.73, blue: 0.95, alpha: 1.0)    // Soft Purple
         ]
         
-        return Card(
-            frontImageData: createPlaceholderImage(text: "FRONT", color: colors.randomElement() ?? .systemBlue).jpegData(compressionQuality: 0.8),
-            backImageData: createPlaceholderImage(text: "BACK", color: colors.randomElement() ?? .systemPink).jpegData(compressionQuality: 0.8),
-            insideLeftImageData: createPlaceholderImage(text: "INSIDE\nLEFT", color: colors.randomElement() ?? .systemPurple).jpegData(compressionQuality: 0.8),
-            insideRightImageData: createPlaceholderImage(text: "INSIDE\nRIGHT", color: colors.randomElement() ?? .systemTeal).jpegData(compressionQuality: 0.8),
-            dateScanned: Date().addingTimeInterval(-Double.random(in: 0...31536000)), // Random date within last year
-            isFavorite: Bool.random(),
+        let _ = viewModel.addCard(
+            frontImage: createPlaceholderImage(text: "FRONT", color: colors.randomElement() ?? .systemBlue),
+            backImage: createPlaceholderImage(text: "BACK", color: colors.randomElement() ?? .systemPink),
+            insideLeftImage: createPlaceholderImage(text: "INSIDE\nLEFT", color: colors.randomElement() ?? .systemPurple),
+            insideRightImage: createPlaceholderImage(text: "INSIDE\nRIGHT", color: colors.randomElement() ?? .systemTeal),
             sender: sender,
             occasion: occasion,
             dateReceived: Date().addingTimeInterval(-Double.random(in: 0...31536000)),
             notes: Bool.random() ? "This is a test note for the dummy card." : nil
         )
+        
+        // Haptic feedback
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+    }
+    
+    private func addMultipleDummyCards() {
+        let senders = ["Mom", "Dad", "Grandma", "Best Friend", "Aunt Sarah"]
+        let occasions = ["Birthday", "Holiday", "Anniversary", "Thank You", "Get Well"]
+        
+        // Premium muted color palette
+        let colors: [UIColor] = [
+            UIColor(red: 0.75, green: 0.65, blue: 1.0, alpha: 1.0),    // Lavender
+            UIColor(red: 1.0, green: 0.54, blue: 0.54, alpha: 1.0),    // Coral
+            UIColor(red: 0.42, green: 0.67, blue: 1.0, alpha: 1.0),    // Ocean Blue
+            UIColor(red: 0.66, green: 0.90, blue: 0.81, alpha: 1.0),   // Mint
+            UIColor(red: 1.0, green: 0.76, blue: 0.65, alpha: 1.0),    // Peach
+            UIColor(red: 0.85, green: 0.73, blue: 0.95, alpha: 1.0)    // Soft Purple
+        ]
+        
+        for i in 0..<5 {
+            let _ = viewModel.addCard(
+                frontImage: createPlaceholderImage(text: "FRONT", color: colors.randomElement() ?? .systemBlue),
+                backImage: createPlaceholderImage(text: "BACK", color: colors.randomElement() ?? .systemPink),
+                insideLeftImage: createPlaceholderImage(text: "INSIDE\nLEFT", color: colors.randomElement() ?? .systemPurple),
+                insideRightImage: createPlaceholderImage(text: "INSIDE\nRIGHT", color: colors.randomElement() ?? .systemTeal),
+                sender: senders[i],
+                occasion: occasions[i],
+                dateReceived: Date().addingTimeInterval(-Double.random(in: 0...31536000)),
+                notes: Bool.random() ? "This is a test note for the dummy card." : nil
+            )
+        }
+        
+        // Haptic feedback
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
     }
     
     private func createPlaceholderImage(text: String, color: UIColor) -> UIImage {
@@ -195,13 +204,7 @@ struct DeveloperSettingsView: View {
     }
     
     private func clearAllCards() {
-        viewModel.cards.removeAll()
-        viewModel.cards = []
-        
-        // Manually trigger save
-        // (Since we're directly modifying, we need to call the repository)
-        let repository = CardRepository()
-        repository.saveCards([])
+        viewModel.clearAllData()
         
         // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .heavy)
@@ -214,5 +217,5 @@ struct DeveloperSettingsView: View {
         viewModel: CardsViewModel(),
         hasCompletedOnboarding: .constant(true)
     )
+    .modelContainer(for: Card.self, inMemory: true)
 }
-
