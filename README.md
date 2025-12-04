@@ -235,6 +235,13 @@ Dearly embraces a warm, nostalgic aesthetic with:
 
 Access developer settings via the hammer icon in HomeView:
 
+- **Performance Testing** - Load test with 10, 50, 100, or 500 cards
+  - Real-time memory usage monitoring
+  - Storage size tracking
+  - Image file count statistics
+  - App size tracking (bundle + user data)
+  - Generation time metrics
+  - Average storage per card
 - Add dummy cards for testing
 - Add 5 dummy cards at once
 - Clear all cards and data

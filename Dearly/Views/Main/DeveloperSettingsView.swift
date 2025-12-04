@@ -51,6 +51,17 @@ struct DeveloperSettingsView: View {
                     }
                 }
                 
+                Section(header: Text("Performance")) {
+                    NavigationLink(destination: PerformanceTestView(viewModel: viewModel)) {
+                        HStack {
+                            Image(systemName: "speedometer")
+                                .foregroundColor(.green)
+                            Text("Performance Testing")
+                            Spacer()
+                        }
+                    }
+                }
+                
                 Section(header: Text("Data Management")) {
                     HStack {
                         Text("Total Cards")

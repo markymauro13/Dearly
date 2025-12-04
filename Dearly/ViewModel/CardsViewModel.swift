@@ -62,6 +62,10 @@ class CardsViewModel: ObservableObject {
         return Array(Set(occasions)).sorted()
     }
     
+    var favoriteCards: [Card] {
+        cards.filter { $0.isFavorite }
+    }
+    
     /// Adds a new card with images
     func addCard(
         frontImage: UIImage?,
@@ -76,13 +80,18 @@ class CardsViewModel: ObservableObject {
         let cardId = UUID()
         
         // Save images to file system
-        let paths = repository?.saveImages(
-            frontImage: frontImage,
-            backImage: backImage,
-            insideLeftImage: insideLeftImage,
-            insideRightImage: insideRightImage,
-            for: cardId
-        ) ?? (front: nil, back: nil, insideLeft: nil, insideRight: nil)
+        let paths: (front: String?, back: String?, insideLeft: String?, insideRight: String?)
+        if let repo = repository {
+            paths = repo.saveImages(
+                frontImage: frontImage,
+                backImage: backImage,
+                insideLeftImage: insideLeftImage,
+                insideRightImage: insideRightImage,
+                for: cardId
+            )
+        } else {
+            paths = (front: nil as String?, back: nil as String?, insideLeft: nil as String?, insideRight: nil as String?)
+        }
         
         // Create card with file paths
         let card = Card(
