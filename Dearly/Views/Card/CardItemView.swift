@@ -10,6 +10,8 @@ import SwiftData
 
 struct CardItemView: View {
     let card: Card
+    var isSelectionMode: Bool = false
+    var isSelected: Bool = false
     var onTap: (() -> Void)?
     var onFavoriteToggle: (() -> Void)?
     
@@ -21,40 +23,58 @@ struct CardItemView: View {
                 // Front of the card
                 CardFrontView(card: card, width: geometry.size.width)
                 
-                // Favorite heart overlay with warm glow
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            let impact = UIImpactFeedbackGenerator(style: .light)
-                            impact.impactOccurred()
-                            onFavoriteToggle?()
-                        }) {
-                            ZStack {
-                                // Glow effect when favorited
-                                if card.isFavorite {
-                                    Circle()
-                                        .fill(Color(red: 1.0, green: 0.5, blue: 0.5).opacity(0.3))
-                                        .frame(width: 36, height: 36)
-                                        .blur(radius: 8)
-                                }
-                                
-                                Image(systemName: card.isFavorite ? "heart.fill" : "heart")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(card.isFavorite ? Color(red: 0.95, green: 0.45, blue: 0.50) : .white)
-                                    .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 1)
-                                    .scaleEffect(card.isFavorite ? 1.15 : 1.0)
-                                    .animation(.spring(response: 0.35, dampingFraction: 0.5), value: card.isFavorite)
-                            }
-                            .padding(10)
-                        }
-                    }
-                    Spacer()
+                // Selection overlay dimming
+                if isSelectionMode && isSelected {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(red: 0.85, green: 0.55, blue: 0.55).opacity(0.15))
+                        .frame(width: geometry.size.width, height: geometry.size.width * 1.4)
                 }
-                .padding(6)
+                
+                // Favorite heart overlay with warm glow (hide in selection mode)
+                if !isSelectionMode {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                let impact = UIImpactFeedbackGenerator(style: .light)
+                                impact.impactOccurred()
+                                onFavoriteToggle?()
+                            }) {
+                                ZStack {
+                                    // Glow effect when favorited
+                                    if card.isFavorite {
+                                        Circle()
+                                            .fill(Color(red: 1.0, green: 0.5, blue: 0.5).opacity(0.3))
+                                            .frame(width: 36, height: 36)
+                                            .blur(radius: 8)
+                                    }
+                                    
+                                    Image(systemName: card.isFavorite ? "heart.fill" : "heart")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(card.isFavorite ? Color(red: 0.95, green: 0.45, blue: 0.50) : .white)
+                                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 1)
+                                        .scaleEffect(card.isFavorite ? 1.15 : 1.0)
+                                        .animation(.spring(response: 0.35, dampingFraction: 0.5), value: card.isFavorite)
+                                }
+                                .padding(10)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(6)
+                }
             }
             .scaleEffect(isPressed ? 0.98 : 1.0)
+            .overlay(
+                // Selection border
+                RoundedRectangle(cornerRadius: 4)
+                    .strokeBorder(
+                        isSelectionMode && isSelected ? Color(red: 0.85, green: 0.55, blue: 0.55) : Color.clear,
+                        lineWidth: 3
+                    )
+            )
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isSelected)
             .onTapGesture {
                 // Haptic feedback
                 let impact = UIImpactFeedbackGenerator(style: .medium)

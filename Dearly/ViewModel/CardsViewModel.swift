@@ -22,6 +22,13 @@ class CardsViewModel: ObservableObject {
     @Published var sortOption: SortOption = .newest
     @Published var selectedOccasionFilter: String? = nil
     
+    // Search
+    @Published var searchText: String = ""
+    
+    // Multi-select mode
+    @Published var isSelectionMode = false
+    @Published var selectedCardIds: Set<UUID> = []
+    
     private var repository: CardRepository?
     private let imageStorage = ImageStorageService.shared
     
@@ -50,11 +57,34 @@ class CardsViewModel: ObservableObject {
     }
     
     private var filteredCards: [Card] {
-        // Filter by occasion if selected
-        if let occasionFilter = selectedOccasionFilter {
-            return cards.filter { $0.occasion == occasionFilter }
+        var result = cards
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            let searchLower = searchText.lowercased()
+            result = result.filter { card in
+                // Search by sender
+                if let sender = card.sender, sender.lowercased().contains(searchLower) {
+                    return true
+                }
+                // Search by occasion
+                if let occasion = card.occasion, occasion.lowercased().contains(searchLower) {
+                    return true
+                }
+                // Search by notes
+                if let notes = card.notes, notes.lowercased().contains(searchLower) {
+                    return true
+                }
+                return false
+            }
         }
-        return cards
+        
+        // Apply occasion filter
+        if let occasionFilter = selectedOccasionFilter {
+            result = result.filter { $0.occasion == occasionFilter }
+        }
+        
+        return result
     }
     
     var availableOccasions: [String] {
@@ -64,6 +94,91 @@ class CardsViewModel: ObservableObject {
     
     var favoriteCards: [Card] {
         cards.filter { $0.isFavorite }
+    }
+    
+    // MARK: - Search
+    
+    var isSearching: Bool {
+        !searchText.isEmpty
+    }
+    
+    func clearSearch() {
+        searchText = ""
+    }
+    
+    // MARK: - Selection Mode
+    
+    var selectedCardsCount: Int {
+        selectedCardIds.count
+    }
+    
+    var allCardsSelected: Bool {
+        !sortedCards.isEmpty && selectedCardIds.count == sortedCards.count
+    }
+    
+    func isCardSelected(_ card: Card) -> Bool {
+        selectedCardIds.contains(card.id)
+    }
+    
+    func toggleCardSelection(_ card: Card) {
+        if selectedCardIds.contains(card.id) {
+            selectedCardIds.remove(card.id)
+        } else {
+            selectedCardIds.insert(card.id)
+        }
+    }
+    
+    func selectAllCards() {
+        selectedCardIds = Set(sortedCards.map { $0.id })
+    }
+    
+    func deselectAllCards() {
+        selectedCardIds.removeAll()
+    }
+    
+    func enterSelectionMode() {
+        isSelectionMode = true
+        selectedCardIds.removeAll()
+    }
+    
+    func exitSelectionMode() {
+        isSelectionMode = false
+        selectedCardIds.removeAll()
+    }
+    
+    // MARK: - Bulk Actions
+    
+    func deleteSelectedCards() {
+        let cardsToDelete = cards.filter { selectedCardIds.contains($0.id) }
+        for card in cardsToDelete {
+            repository?.deleteCard(card)
+            cards.removeAll { $0.id == card.id }
+        }
+        exitSelectionMode()
+    }
+    
+    func favoriteSelectedCards() {
+        let selectedCards = cards.filter { selectedCardIds.contains($0.id) }
+        for card in selectedCards {
+            if !card.isFavorite {
+                card.isFavorite = true
+            }
+        }
+        repository?.updateCard()
+        objectWillChange.send()
+        exitSelectionMode()
+    }
+    
+    func unfavoriteSelectedCards() {
+        let selectedCards = cards.filter { selectedCardIds.contains($0.id) }
+        for card in selectedCards {
+            if card.isFavorite {
+                card.isFavorite = false
+            }
+        }
+        repository?.updateCard()
+        objectWillChange.send()
+        exitSelectionMode()
     }
     
     /// Adds a new card with images
@@ -90,7 +205,8 @@ class CardsViewModel: ObservableObject {
                 for: cardId
             )
         } else {
-            paths = (front: nil as String?, back: nil as String?, insideLeft: nil as String?, insideRight: nil as String?)
+            let nilPath: String? = nil
+            paths = (front: nilPath, back: nilPath, insideLeft: nilPath, insideRight: nilPath)
         }
         
         // Create card with file paths
