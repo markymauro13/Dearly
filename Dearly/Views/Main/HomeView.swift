@@ -201,7 +201,7 @@ struct HomeView: View {
                                         viewModel.enterSelectionMode()
                                     }
                                 }) {
-                                    Image(systemName: "checkmark.circle")
+                                    Image(systemName: "checklist")
                                         .font(.system(size: 20))
                                         .foregroundColor(.black)
                                 }
@@ -248,7 +248,10 @@ struct HomeView: View {
         .sheet(isPresented: $viewModel.isShowingScanner) {
             ScanCardFlowView(viewModel: viewModel)
         }
-        .sheet(isPresented: $showingDevSettings) {
+        .sheet(isPresented: $showingDevSettings, onDismiss: {
+            // Reload cards when developer settings is dismissed
+            viewModel.configure(with: modelContext)
+        }) {
             DeveloperSettingsView(
                 viewModel: viewModel,
                 hasCompletedOnboarding: $hasCompletedOnboarding

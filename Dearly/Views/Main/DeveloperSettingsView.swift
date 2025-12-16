@@ -144,22 +144,30 @@ struct DeveloperSettingsView: View {
             UIColor(red: 0.85, green: 0.73, blue: 0.95, alpha: 1.0)    // Soft Purple
         ]
         
-        for i in 0..<5 {
-            let _ = viewModel.addCard(
-                frontImage: createPlaceholderImage(text: "FRONT", color: colors.randomElement() ?? .systemBlue),
-                backImage: createPlaceholderImage(text: "BACK", color: colors.randomElement() ?? .systemPink),
-                insideLeftImage: createPlaceholderImage(text: "INSIDE\nLEFT", color: colors.randomElement() ?? .systemPurple),
-                insideRightImage: createPlaceholderImage(text: "INSIDE\nRIGHT", color: colors.randomElement() ?? .systemTeal),
-                sender: senders[i],
-                occasion: occasions[i],
-                dateReceived: Date().addingTimeInterval(-Double.random(in: 0...31536000)),
-                notes: Bool.random() ? "This is a test note for the dummy card." : nil
-            )
+        // Add cards with a small delay between each to let SwiftData process
+        Task {
+            for i in 0..<5 {
+                let _ = viewModel.addCard(
+                    frontImage: createPlaceholderImage(text: "FRONT", color: colors.randomElement() ?? .systemBlue),
+                    backImage: createPlaceholderImage(text: "BACK", color: colors.randomElement() ?? .systemPink),
+                    insideLeftImage: createPlaceholderImage(text: "INSIDE\nLEFT", color: colors.randomElement() ?? .systemPurple),
+                    insideRightImage: createPlaceholderImage(text: "INSIDE\nRIGHT", color: colors.randomElement() ?? .systemTeal),
+                    sender: senders[i],
+                    occasion: occasions[i],
+                    dateReceived: Date().addingTimeInterval(-Double.random(in: 0...31536000)),
+                    notes: Bool.random() ? "This is a test note for the dummy card." : nil
+                )
+                
+                // Small delay to let SwiftData process the save
+                try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+            }
+            
+            // Haptic feedback after all cards are added
+            await MainActor.run {
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+            }
         }
-        
-        // Haptic feedback
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
     }
     
     private func createPlaceholderImage(text: String, color: UIColor) -> UIImage {
