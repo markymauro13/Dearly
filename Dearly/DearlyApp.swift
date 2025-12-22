@@ -7,22 +7,32 @@
 
 import SwiftUI
 import SwiftData
+import SuperwallKit
 
 @main
 struct DearlyApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     init() {
+        // Configure Superwall SDK
+        Superwall.configure(apiKey: "pk_qgy7lKimDkwfz7eHprOZq")
+        
         // Clean up legacy UserDefaults data from old storage system
         clearLegacyUserDefaultsData()
     }
     
     var body: some Scene {
         WindowGroup {
-            if hasCompletedOnboarding {
-                HomeView()
-            } else {
-                OnboardingView(isOnboardingComplete: $hasCompletedOnboarding)
+            Group {
+                if hasCompletedOnboarding {
+                    HomeView()
+                } else {
+                    OnboardingView(isOnboardingComplete: $hasCompletedOnboarding)
+                }
+            }
+            .onOpenURL { url in
+                // Handle deep links with Superwall
+                Superwall.handleDeepLink(url)
             }
         }
         .modelContainer(for: Card.self)

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import SuperwallKit
 
 struct DeveloperSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +18,17 @@ struct DeveloperSettingsView: View {
         NavigationStack {
             Form {
                 Section(header: Text("Developer Tools")) {
+                    Button(action: {
+                        testPaywall()
+                    }) {
+                        HStack {
+                            Image(systemName: "creditcard.fill")
+                                .foregroundColor(.green)
+                            Text("Test Paywall")
+                            Spacer()
+                        }
+                    }
+                    
                     Button(action: {
                         resetOnboarding()
                     }) {
@@ -92,6 +104,13 @@ struct DeveloperSettingsView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func testPaywall() {
+        // Register a test placement to trigger a paywall
+        Superwall.shared.register(placement: "test_paywall") {
+            print("✅ Feature unlocked! User has access.")
         }
     }
     

@@ -68,8 +68,8 @@ Dearly transforms physical greeting cards into digital memories that you can kee
 
 ### Phase 1: Core Enhancements
 
-- [ ] Search functionality (by sender, occasion, notes)
-- [ ] Multiple cards selection and bulk actions
+- [X] Search functionality (by sender, occasion, notes)
+- [X] Multiple cards selection and bulk actions
 - [ ] Card duplication
 - [ ] Export individual cards or collections
 - [ ] Share cards via Messages, Email, AirDrop
