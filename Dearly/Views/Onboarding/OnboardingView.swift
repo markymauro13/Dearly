@@ -32,11 +32,8 @@ struct OnboardingView: View {
                 OnboardingPage2(currentPage: $currentPage)
                     .tag(1)
                 
-                OnboardingPage3(currentPage: $currentPage)
+                OnboardingPage3(currentPage: $currentPage, isOnboardingComplete: $isOnboardingComplete)
                     .tag(2)
-                
-                OnboardingPage4(isOnboardingComplete: $isOnboardingComplete)
-                    .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             
@@ -44,7 +41,7 @@ struct OnboardingView: View {
             VStack {
                 Spacer()
                 HStack(spacing: 8) {
-                    ForEach(0..<4, id: \.self) { index in
+                    ForEach(0..<3, id: \.self) { index in
                         Capsule()
                             .fill(currentPage == index ? 
                                   Color(red: 0.85, green: 0.55, blue: 0.55) : 

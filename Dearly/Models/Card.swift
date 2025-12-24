@@ -7,13 +7,15 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
-struct Card: Identifiable, Codable {
-    let id: UUID
-    var frontImageData: Data?
-    var backImageData: Data?
-    var insideLeftImageData: Data?
-    var insideRightImageData: Data?
+@Model
+final class Card {
+    var id: UUID
+    var frontImagePath: String?
+    var backImagePath: String?
+    var insideLeftImagePath: String?
+    var insideRightImagePath: String?
     var dateScanned: Date
     var isFavorite: Bool
     
@@ -25,10 +27,10 @@ struct Card: Identifiable, Codable {
     
     init(
         id: UUID = UUID(),
-        frontImageData: Data? = nil,
-        backImageData: Data? = nil,
-        insideLeftImageData: Data? = nil,
-        insideRightImageData: Data? = nil,
+        frontImagePath: String? = nil,
+        backImagePath: String? = nil,
+        insideLeftImagePath: String? = nil,
+        insideRightImagePath: String? = nil,
         dateScanned: Date = Date(),
         isFavorite: Bool = false,
         sender: String? = nil,
@@ -37,10 +39,10 @@ struct Card: Identifiable, Codable {
         notes: String? = nil
     ) {
         self.id = id
-        self.frontImageData = frontImageData
-        self.backImageData = backImageData
-        self.insideLeftImageData = insideLeftImageData
-        self.insideRightImageData = insideRightImageData
+        self.frontImagePath = frontImagePath
+        self.backImagePath = backImagePath
+        self.insideLeftImagePath = insideLeftImagePath
+        self.insideRightImagePath = insideRightImagePath
         self.dateScanned = dateScanned
         self.isFavorite = isFavorite
         self.sender = sender
@@ -49,25 +51,21 @@ struct Card: Identifiable, Codable {
         self.notes = notes
     }
     
-    // Helper to get UIImage from stored data
+    // MARK: - Computed Properties for Image Loading
+    
     var frontImage: UIImage? {
-        guard let data = frontImageData else { return nil }
-        return UIImage(data: data)
+        ImageStorageService.shared.loadImage(from: frontImagePath)
     }
     
     var backImage: UIImage? {
-        guard let data = backImageData else { return nil }
-        return UIImage(data: data)
+        ImageStorageService.shared.loadImage(from: backImagePath)
     }
     
     var insideLeftImage: UIImage? {
-        guard let data = insideLeftImageData else { return nil }
-        return UIImage(data: data)
+        ImageStorageService.shared.loadImage(from: insideLeftImagePath)
     }
     
     var insideRightImage: UIImage? {
-        guard let data = insideRightImageData else { return nil }
-        return UIImage(data: data)
+        ImageStorageService.shared.loadImage(from: insideRightImagePath)
     }
 }
-

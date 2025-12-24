@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
 enum SortOption: String, CaseIterable {
     case newest = "Newest"
@@ -21,10 +22,23 @@ class CardsViewModel: ObservableObject {
     @Published var sortOption: SortOption = .newest
     @Published var selectedOccasionFilter: String? = nil
     
-    private let repository: CardRepositoryProtocol
+    // Search
+    @Published var searchText: String = ""
     
-    init(repository: CardRepositoryProtocol = CardRepository()) {
-        self.repository = repository
+    // Multi-select mode
+    @Published var isSelectionMode = false
+    @Published var selectedCardIds: Set<UUID> = []
+    
+    private var repository: CardRepository?
+    private let imageStorage = ImageStorageService.shared
+    
+    init() {
+        // Repository will be set when modelContext is available
+    }
+    
+    /// Configure the view model with a model context
+    func configure(with modelContext: ModelContext) {
+        self.repository = CardRepository(modelContext: modelContext)
         loadCards()
     }
     
@@ -43,11 +57,34 @@ class CardsViewModel: ObservableObject {
     }
     
     private var filteredCards: [Card] {
-        // Filter by occasion if selected
-        if let occasionFilter = selectedOccasionFilter {
-            return cards.filter { $0.occasion == occasionFilter }
+        var result = cards
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            let searchLower = searchText.lowercased()
+            result = result.filter { card in
+                // Search by sender
+                if let sender = card.sender, sender.lowercased().contains(searchLower) {
+                    return true
+                }
+                // Search by occasion
+                if let occasion = card.occasion, occasion.lowercased().contains(searchLower) {
+                    return true
+                }
+                // Search by notes
+                if let notes = card.notes, notes.lowercased().contains(searchLower) {
+                    return true
+                }
+                return false
+            }
         }
-        return cards
+        
+        // Apply occasion filter
+        if let occasionFilter = selectedOccasionFilter {
+            result = result.filter { $0.occasion == occasionFilter }
+        }
+        
+        return result
     }
     
     var availableOccasions: [String] {
@@ -55,38 +92,172 @@ class CardsViewModel: ObservableObject {
         return Array(Set(occasions)).sorted()
     }
     
-    func addCard(_ card: Card) {
+    var favoriteCards: [Card] {
+        cards.filter { $0.isFavorite }
+    }
+    
+    // MARK: - Search
+    
+    var isSearching: Bool {
+        !searchText.isEmpty
+    }
+    
+    func clearSearch() {
+        searchText = ""
+    }
+    
+    // MARK: - Selection Mode
+    
+    var selectedCardsCount: Int {
+        selectedCardIds.count
+    }
+    
+    var allCardsSelected: Bool {
+        !sortedCards.isEmpty && selectedCardIds.count == sortedCards.count
+    }
+    
+    func isCardSelected(_ card: Card) -> Bool {
+        selectedCardIds.contains(card.id)
+    }
+    
+    func toggleCardSelection(_ card: Card) {
+        if selectedCardIds.contains(card.id) {
+            selectedCardIds.remove(card.id)
+        } else {
+            selectedCardIds.insert(card.id)
+        }
+    }
+    
+    func selectAllCards() {
+        selectedCardIds = Set(sortedCards.map { $0.id })
+    }
+    
+    func deselectAllCards() {
+        selectedCardIds.removeAll()
+    }
+    
+    func enterSelectionMode() {
+        isSelectionMode = true
+        selectedCardIds.removeAll()
+    }
+    
+    func exitSelectionMode() {
+        isSelectionMode = false
+        selectedCardIds.removeAll()
+    }
+    
+    // MARK: - Bulk Actions
+    
+    func deleteSelectedCards() {
+        let cardsToDelete = cards.filter { selectedCardIds.contains($0.id) }
+        for card in cardsToDelete {
+            repository?.deleteCard(card)
+            cards.removeAll { $0.id == card.id }
+        }
+        exitSelectionMode()
+    }
+    
+    func favoriteSelectedCards() {
+        let selectedCards = cards.filter { selectedCardIds.contains($0.id) }
+        for card in selectedCards {
+            if !card.isFavorite {
+                card.isFavorite = true
+            }
+        }
+        repository?.updateCard()
+        objectWillChange.send()
+        exitSelectionMode()
+    }
+    
+    func unfavoriteSelectedCards() {
+        let selectedCards = cards.filter { selectedCardIds.contains($0.id) }
+        for card in selectedCards {
+            if card.isFavorite {
+                card.isFavorite = false
+            }
+        }
+        repository?.updateCard()
+        objectWillChange.send()
+        exitSelectionMode()
+    }
+    
+    /// Adds a new card with images
+    func addCard(
+        frontImage: UIImage?,
+        backImage: UIImage?,
+        insideLeftImage: UIImage?,
+        insideRightImage: UIImage?,
+        sender: String? = nil,
+        occasion: String? = nil,
+        dateReceived: Date? = nil,
+        notes: String? = nil
+    ) -> Card {
+        let cardId = UUID()
+        
+        // Save images to file system
+        let paths: (front: String?, back: String?, insideLeft: String?, insideRight: String?)
+        if let repo = repository {
+            paths = repo.saveImages(
+                frontImage: frontImage,
+                backImage: backImage,
+                insideLeftImage: insideLeftImage,
+                insideRightImage: insideRightImage,
+                for: cardId
+            )
+        } else {
+            let nilPath: String? = nil
+            paths = (front: nilPath, back: nilPath, insideLeft: nilPath, insideRight: nilPath)
+        }
+        
+        // Create card with file paths
+        let card = Card(
+            id: cardId,
+            frontImagePath: paths.front,
+            backImagePath: paths.back,
+            insideLeftImagePath: paths.insideLeft,
+            insideRightImagePath: paths.insideRight,
+            dateScanned: Date(),
+            isFavorite: false,
+            sender: sender,
+            occasion: occasion,
+            dateReceived: dateReceived,
+            notes: notes
+        )
+        
+        repository?.addCard(card)
         cards.insert(card, at: 0) // Add to beginning for newest first
-        saveCards()
+        
+        return card
     }
     
     func deleteCard(_ card: Card) {
+        repository?.deleteCard(card)
         cards.removeAll { $0.id == card.id }
-        saveCards()
     }
     
     func updateCard(_ card: Card) {
+        repository?.updateCard()
+        // SwiftData tracks changes automatically, just refresh local array
         if let index = cards.firstIndex(where: { $0.id == card.id }) {
             cards[index] = card
-            saveCards()
         }
     }
     
     func toggleFavorite(for card: Card) {
-        if let index = cards.firstIndex(where: { $0.id == card.id }) {
-            cards[index].isFavorite.toggle()
-            saveCards()
-        }
+        card.isFavorite.toggle()
+        repository?.updateCard()
+        objectWillChange.send()
+    }
+    
+    /// Clears all data (for testing/reset)
+    func clearAllData() {
+        repository?.clearAllData()
+        cards.removeAll()
     }
     
     // MARK: - Private Methods
     
-    private func saveCards() {
-        repository.saveCards(cards)
-    }
-    
-    private func loadCards() {
-        cards = repository.loadCards()
+    func loadCards() {
+        cards = repository?.fetchAllCards() ?? []
     }
 }
-

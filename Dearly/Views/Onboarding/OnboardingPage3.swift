@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import SuperwallKit
 
 struct OnboardingPage3: View {
     @Binding var currentPage: Int
+    @Binding var isOnboardingComplete: Bool
     
     var body: some View {
         VStack(spacing: 0) {
@@ -56,8 +58,20 @@ struct OnboardingPage3: View {
             Button(action: {
                 let impact = UIImpactFeedbackGenerator(style: .light)
                 impact.impactOccurred()
-                withAnimation(.spring(response: 0.4)) {
-                    currentPage = 3
+                
+                // Present Superwall paywall
+                let handler = PaywallPresentationHandler()
+                handler.onDismiss { _, _ in
+                    // Complete onboarding when paywall is dismissed (whether they purchased or not)
+                    isOnboardingComplete = true
+                }
+                
+                Superwall.shared.register(
+                    placement: "onboarding_complete",
+                    handler: handler
+                ) {
+                    // Feature unlocked - user has premium access
+                    isOnboardingComplete = true
                 }
             }) {
                 Text("Continue")
@@ -116,6 +130,6 @@ struct CategoryPill: View {
 #Preview {
     ZStack {
         Color(red: 1.0, green: 0.97, blue: 0.95).ignoresSafeArea()
-        OnboardingPage3(currentPage: .constant(2))
+        OnboardingPage3(currentPage: .constant(2), isOnboardingComplete: .constant(false))
     }
 }
